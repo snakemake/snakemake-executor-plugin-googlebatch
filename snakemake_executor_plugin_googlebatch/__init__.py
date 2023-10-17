@@ -52,10 +52,20 @@ class ExecutorSettings(ExecutorSettingsBase):
         }
     )
 
+    # This could also be batch-centos, batch-debian, batch-cos
     image_family: Optional[str]=field(
         default="hpc-centos-7",
         metadata={
             "help": "Google Cloud image family (defaults to hpc-centos-7)", 
+            "env_var": False,
+            "required": False,
+        }
+    )
+
+    container: Optional[str]=field(
+        default=None,
+        metadata={
+            "help": "If batch-cos is set for image family, a container is allowed (it should have snakemake).", 
             "env_var": False,
             "required": False,
         }

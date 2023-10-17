@@ -62,6 +62,7 @@ And custom arguments can be any of the following, either on the command line or 
 | retry_count | Retry count (default to 1) | int | `--googlebatch-retry-count` | | False | 1 |
 | max_run_duration | Maximum run duration, string (e.g., 3600s) | str | `--googlebatch-max-run-duration` | | False | "3600s" |
 | labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) | str | `--googlebatch-labels` | | False | unset|
+| container | Container to use (only when image_family is batch-cos) | str | `--googlebatch-container` | | False | unset|
 
 For machine type, note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
 Also note that you can customize the machine type on the level of the step (see [Step Options](#step-options) below).
@@ -248,12 +249,51 @@ rule hello_world:
         "..."
 ```
 
+
+#### googlebatch_container
+
+A container to use only with `image_family` set to batch-cos
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_container="ghcr.io/rse-ops/atacseq:app-latest"
+	shell:
+        "..."
+```
+
+
 ### Questions
 
 - What leads to STATE_UNSPECIFIED?
 - Should MPI barriers / install be integrated into wrappers or here?
-- How do we represent more than one runnable in a step?
-- How do we install Snakemake without a container?
+- For All (Google Gatch) How do we represent more than one runnable in a step?
+- For Johannes: Best strategy to install Snakemake without a container (I'm using simplest means with system python for now)
+- For Johannes: Why can't we use debug logging for executor plugins? I instead need to use info and make it very verbose.
+- For Johannes: we should be able to update the aux metadata for a job (and have it persist)?
+- For All: How do we want to use [COS](https://cloud.google.com/container-optimized-os/docs/concepts/features-and-benefits)? It would allow a container base to be used instead I think?
+- For Google: How do we get the same log for the final job (e.g., to show to the user?) [I don't see it here](https://github.com/googleapis/google-cloud-python/blob/8235ef62943bae4bb574c4d5555ce46db231c7d2/packages/google-cloud-batch/google/cloud/batch_v1/types/batch.py#L313-L340) (only status messages)
+- For Google: there should be a quick exit / fail if something in the script fails (it seems to keep going)
+- For Johannes: the snakemake-interface-executor-plugins doesn't work with the latest from mamba, can we nudge it back?
+
+> ERROR: Package 'snakemake-interface-executor-plugins' requires a different Python: 3.10.12 not in '<4.0,>=3.11'
+
+## Notes
+
+- I started with "basic" approaches for installing Snakemake (e.g., system Python) and it quickly got messy. Better - we should use one approach (mamba across families)
+
+### Feedback
+
+- Debugging batch is impossible (and slow). A "hello world" workflow takes 10 minutes to run and debug once.
+- The jobs table is slow to load and sometimes does not load / shows old jobs at the top (without me touching anything)
+- The logs directly in batch are so much better! Having the stream option there would still be nice (vs. having to refresh.)
+- The batch UI (jobs table) is very slow to load and often just doesn't even after button or page refresh.
+
+### TODO
+
+- look closely at logs, and see if there is an id so we can keep track of those we've shown in the aux info (and add to debug)
 
 ### Tutorial
 

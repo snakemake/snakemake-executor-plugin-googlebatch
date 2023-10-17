@@ -9,12 +9,13 @@ from snakemake_interface_executor_plugins.logging import LoggerExecutorInterface
 from snakemake_interface_executor_plugins.jobs import (
     JobExecutorInterface,
 )
+from snakemake.common import get_container_image
 from snakemake_interface_common.exceptions import WorkflowError  # noqa
+import snakemake_executor_plugin_googlebatch.utils as utils
+import snakemake_executor_plugin_googlebatch.command as cmdutil
 
 from google.cloud import batch_v1
 
-# This should be moved into template
-snakemake_install = "python -m ensurepip && python -m pip install snakemake"
 
 class GoogleBatchExecutor(RemoteExecutor):
     def __init__(
@@ -93,7 +94,61 @@ class GoogleBatchExecutor(RemoteExecutor):
         Generate a random jobid
         """
         uid = str(uuid.uuid4())
-        job.name.replace('_', '-') + "-" + uid
+        return job.name.replace('_', '-') + "-" + uid[0:6]
+
+    def validate(self, job):
+        """
+        Ensure the choices of arguments make sense.
+        """
+        container = self.get_container(job)
+        family = self.get_param(job, "image_family") 
+
+        # We can't take a custom container if batch-cos is not set
+        # We only give a warning here in case it's a one-off setting
+        if family != "batch-cos" and container:
+            self.logger.warning(f"Job {job} has container without image_family batch-cos.")
+
+    def get_container(self, job):
+        """
+        Get container intended for a job
+        """
+        return job.resources.get("container") or self.executor_settings.container
+
+    def derive_setup_command(self, job):
+        """
+        Derive a setup command for a job.
+
+        This largely depends on the image family selected to either install
+        snakemake or run a container on batch-cos.
+        """
+        family = self.get_param(job, "image_family") 
+
+        # If batch-cos is the image family we will use a container
+        container = self.get_container(job) or get_container_image()
+
+        # We will write the Snakefile to the worker
+        snakefile = self.get_snakefile()
+
+        # Derive the command. E.g., COS will likely run the snakemake container
+        # And installs depend on the base operating system we find
+        command = cmdutil.derive_setup_command(container, family, snakefile)        
+        self.logger.info("\n🌟️ Setup Command:")
+        print(command)
+        return command
+
+    def derive_command(self, job):
+        """
+        Derive a command for a job.
+
+        This largely depends on the image family selected to either install
+        snakemake or run a container on batch-cos.
+        """
+        family = self.get_param(job, "image_family") 
+        command = self.format_job_exec(job)
+        command = cmdutil.derive_command(command, family)
+        self.logger.info("\n🐍️ Snakemake Command:")
+        print(command)
+        return command
 
     def run_job(self, job: JobExecutorInterface):
         """
@@ -105,13 +160,6 @@ class GoogleBatchExecutor(RemoteExecutor):
         logfile = job.logfile_suggestion(os.path.join(".snakemake", "googlebatch_logs"))
         os.makedirs(os.path.dirname(logfile), exist_ok=True)
 
-        # The entire snakemake command to run, etc
-        command = self.format_job_exec(job)
-        self.logger.debug(command)
-        
-        # Add on basic install of pip and snakemake
-        command = snakemake_install + "&&" + command
-
         # This will create one simple runnable for a task
         task = batch_v1.TaskSpec()
         task.max_retry_count = self.get_param(job, "retry_count") 
@@ -120,9 +168,19 @@ class GoogleBatchExecutor(RemoteExecutor):
         # A single runnable to execute snakemake
         runnable = batch_v1.Runnable()
         runnable.script = batch_v1.Runnable.Script()
-        runnable.script.text = command
-        task.runnables = [runnable]
-        
+        runnable.script.text = self.derive_command(job)
+
+        # Snakemake setup must finish before snakemake is run
+        setup = batch_v1.Runnable()
+        setup.script = batch_v1.Runnable.Script()
+        setup.script.text = self.derive_setup_command(job)
+
+        # This will ensure all nodes finish first
+        barrier = batch_v1.Runnable()
+        barrier.barrier = batch_v1.Runnable.Barrier()
+        barrier.barrier.name = "wait-for-setup"
+        task.runnables = [setup, barrier, runnable] 
+
         # Are we adding storage?
         self.add_storage(job, task)
 
@@ -161,7 +219,8 @@ class GoogleBatchExecutor(RemoteExecutor):
         createdjob = self.batch.create_job(create_request)
 
         # Save aux metadata
-        aux = {"batch_job": createdjob, "logfile": logfile}
+        # Last seen will hold the timestamp of last recorded status
+        aux = {"batch_job": createdjob, "logfile": logfile, "last_seen": None}
 
         # Record job info - the name is what we use to get a status later
         self.report_job_submission(SubmittedJobInfo(job, external_jobid=createdjob.name, aux=aux))
@@ -191,16 +250,6 @@ class GoogleBatchExecutor(RemoteExecutor):
 
 #    # Define what will be done as part of the job.
 #    task = batch_v1.TaskSpec()
-#    setup = batch_v1.Runnable()
-#    setup.script = batch_v1.Runnable.Script()
-#    setup.script.text = "bash /mnt/share/hello-world-mpi/setup.sh"
-
-    # This will ensure all nodes finish first
-#    barrier = batch_v1.Runnable()
-#    barrier.barrier = batch_v1.Runnable.Barrier()
-#    barrier.barrier.name = "wait-for-setup"
-
-#    task.runnables = [setup, barrier, runnable]
 
 
     def project_parent(self, job):
@@ -243,8 +292,21 @@ class GoogleBatchExecutor(RemoteExecutor):
         return allocation_policy
 
     def get_snakefile(self):
+        """
+        Get the content of the Snakefile to write to the worker.
+        
+        This might need to be improved to support storage, etc.
+        """
         assert os.path.exists(self.workflow.main_snakefile)
-        return self.workflow.main_snakefile
+        return utils.read_file(self.workflow.main_snakefile)
+
+    def get_snakefile(self):
+        """
+        Use a Snakefile in the present working directory since we write it.
+        """
+        assert os.path.exists(self.workflow.main_snakefile)
+        return "Snakefile"
+
 
     async def check_active_jobs(
         self, active_jobs: List[SubmittedJobInfo]
@@ -255,14 +317,21 @@ class GoogleBatchExecutor(RemoteExecutor):
         # Loop through active jobs and act on status
         for j in active_jobs:
             jobid = j.external_jobid
-            self.logger.debug(f"Checking status for job {jobid}")
             request = batch_v1.GetJobRequest(name=jobid)
             response = self.batch.get_job(request=request)
 
             # Aux logs are consistently here
             aux_logs = [j.aux["logfile"]]
+            last_seen = j.aux["last_seen"]
 
-            self.logger.debug(f"Google batch job has state {response.status.state.name}")
+            self.logger.info(f"Job {jobid} has state {response.status.state.name}")
+            for event in response.status.status_events:
+                if not last_seen or event.event_time.nanosecond > last_seen:
+                    self.logger.info(f"{event.type_}: {event.description}")
+                    last_seen = event.event_time.nanosecond
+
+            # Update last seen for next time (TODO not sure this is sticking)
+            j.aux['last_seen'] = last_seen
 
             # Possible statuses:
             # RUNNING
@@ -295,5 +364,5 @@ class GoogleBatchExecutor(RemoteExecutor):
             operation = self.batch.delete_job(request=request)
             self.logger.info(f"Waiting for job {jobid} to cancel...")
             response = operation.result()
-            self.logger.debug(response)
-        self.shutdown()
+            self.logger.info(response)
+        # self.shutdown()
