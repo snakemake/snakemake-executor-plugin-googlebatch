@@ -80,7 +80,7 @@ The following options are allowed for batch steps. This predominantly includes m
 
 This will define the machine type for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -94,7 +94,7 @@ rule hello_world:
 
 This will define the image family for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -109,7 +109,7 @@ rule hello_world:
 
 This will define the image project for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -124,7 +124,7 @@ rule hello_world:
 
 This will define the bucket for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -138,7 +138,7 @@ rule hello_world:
 
 This will define the mount path for a bucket for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -153,7 +153,7 @@ rule hello_world:
 
 This will define the work tasks for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -167,7 +167,7 @@ rule hello_world:
 
 This will define the milliseconds per cpu-second for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -181,7 +181,7 @@ rule hello_world:
 
 This will define the work tasks per node (Google batch calls these tasks) for a particular step, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -195,7 +195,7 @@ rule hello_world:
 
 This will define the memory for a particular step as an integer in MiB, overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -210,7 +210,7 @@ rule hello_world:
 
 This will define the retry times for a step overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -224,7 +224,7 @@ rule hello_world:
 
 This will define the max run duration for a step overriding the default from the command line.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -238,7 +238,7 @@ rule hello_world:
 
 This will define the extra labels to add to the Google Batch job.
 
-```yaml
+```console
 rule hello_world:
 	output:
 		"...",
@@ -326,3 +326,17 @@ plugin for use or development (that doesn't need to be added to upstream snakema
 
 The instructions for creating and scaffolding this plugin are [here](https://github.com/snakemake/poetry-snakemake-plugin#scaffolding-an-executor-plugin).
 Instructions for writing your plugin with examples are provided via the [snakemake-executor-plugin-interface](https://github.com/snakemake/snakemake-executor-plugin-interface).
+
+
+## License
+
+HPCIC DevTools is distributed under the terms of the MIT license.
+All new contributions must be made under this license.
+
+See [LICENSE](https://github.com/converged-computing/cloud-select/blob/main/LICENSE),
+[COPYRIGHT](https://github.com/converged-computing/cloud-select/blob/main/COPYRIGHT), and
+[NOTICE](https://github.com/converged-computing/cloud-select/blob/main/NOTICE) for details.
+
+SPDX-License-Identifier: (MIT)
+
+LLNL-CODE- 842614
