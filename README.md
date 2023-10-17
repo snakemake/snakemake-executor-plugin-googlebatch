@@ -47,13 +47,13 @@ snakemake --jobs 1 --executor googlebatch --googlebatch-project myproject --goog
 And custom arguments can be any of the following, either on the command line or provided in the environment.
 
 | Name | Description | Flag | Type | Environment Variable | Required | Default |
-|------|-------------|------|----------------------|----------|---------|
+|------|-------------|------|------|----------------------|----------|---------|
 | project | The name of the Google Project | `--googlebatch-project` | str | `SNAKEMAKE_GOOGLEBATCH_PROJECT` | True |  unset |
 | region | The name of the Google Project region (e.g., us-central1) | str | `--googlebatch-region` |`SNAKEMAKE_GOOGLEBATCH_REGION` | True | unset |
 | machine_type | Google Cloud machine type or VM (mpitune configurations are on c2 and c2d family) | str | `--googlebatch-machine-type` | | False | c2-standard-4 |
 | image_family | Google Cloud image family (defaults to hpc-centos-7) | str | `--googlebatch-image-family` | | False | hpc-centos-7 |
 | image_project | The project the selected image belongs to (defaults to cloud-hpc-image-public) | str |  `--googlebatch-image-project` | | False | cloud-hpc-image-public |
-| bucket | A bucket to mount with snakemake data | str | `--googlebatch-bucket` | | False |  |
+| bucket | A bucket to mount with snakemake data | str | `--googlebatch-bucket` | | False |  unset |
 | mount_path | The mount path for a bucket (if provided) | str | `--googlebatch-mount-path` | | False | /mnt/share |
 | work_tasks | The default number of work tasks (these are NOT MPI ranks) | int | `--googlebatch-work-tasks` | | False | 1 |
 | cpu_milli | Milliseconds per cpu-second | int| `--googlebatch-cpu-milli` | | False | 1000 |
@@ -61,8 +61,7 @@ And custom arguments can be any of the following, either on the command line or 
 | memory | Memory in MiB | int | `--googlebatch-memory` | | False | 1000 |
 | retry_count | Retry count (default to 1) | int | `--googlebatch-retry-count` | | False | 1 |
 | max_run_duration | Maximum run duration, string (e.g., 3600s) | str | `--googlebatch-max-run-duration` | | False | "3600s" |
-| labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) | str | `--googlebatch-labels` | | False | unset |
-
+| labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) | str | `--googlebatch-labels` | | False | unset|
 For machine type, note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
 Also note that you can customize the machine type on the level of the step (see [Step Options](#step-options) below).
 
