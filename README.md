@@ -62,6 +62,7 @@ And custom arguments can be any of the following, either on the command line or 
 | retry_count | Retry count (default to 1) | int | `--googlebatch-retry-count` | | False | 1 |
 | max_run_duration | Maximum run duration, string (e.g., 3600s) | str | `--googlebatch-max-run-duration` | | False | "3600s" |
 | labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) | str | `--googlebatch-labels` | | False | unset|
+
 For machine type, note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
 Also note that you can customize the machine type on the level of the step (see [Step Options](#step-options) below).
 
