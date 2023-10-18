@@ -9,6 +9,7 @@ cat ./Snakefile
 """
 
 snakemake_base_environment = """
+export HOME=/root
 export PATH=/opt/conda/bin:${PATH}
 export LANG=C.UTF-8
 export SHELL=/bin/bash
@@ -19,18 +20,22 @@ sudo yum update -y
 sudo yum install -y wget bzip2 ca-certificates gnupg2 squashfs-tools git
 """
 
+snakemake_debian_install = snakemake_base_environment + """
+sudo apt-get update -y
+sudo apt-get install -y wget bzip2 ca-certificates gnupg2 squashfs-tools git
+"""
+
 install_snakemake = """
 # Only the main job should install conda (rest can use it)
 echo "I am batch index ${BATCH_TASK_INDEX}"
 export PATH=/opt/conda/bin:${PATH}
 if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
-    curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-$(uname -m).sh > mambaforge.sh
     workdir=$(pwd)
-    bash mambaforge.sh -b -p /opt/conda
-    micromamba self-update
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ./miniconda.sh
+    chmod +x ./miniconda.sh
+    bash ./miniconda.sh -b -u -p /opt/conda
+    rm -rf ./miniconda.sh
     conda config --system --set channel_priority strict 
-    rm mambaforge.sh
-    mamba install -c conda-forge -c bioconda singularity
     which python
     /opt/conda/bin/python --version
     git clone --depth 1 https://github.com/snakemake/snakemake-interface-common /tmp/snakemake-common
@@ -47,6 +52,8 @@ fi
 """
 
 run_snakemake = snakemake_base_environment + """
+$(pwd)
+ls
 which snakemake || whereis snakemake
 """
 

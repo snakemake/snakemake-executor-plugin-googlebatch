@@ -126,8 +126,8 @@ class GoogleBatchExecutor(RemoteExecutor):
         # If batch-cos is the image family we will use a container
         container = self.get_container(job) or get_container_image()
 
-        # We will write the Snakefile to the worker
-        snakefile = self.get_snakefile()
+        # We will write the Snakefile to the worker (this is the contents)
+        snakefile = self.read_snakefile()
 
         # Derive the command. E.g., COS will likely run the snakemake container
         # And installs depend on the base operating system we find
@@ -291,7 +291,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         allocation_policy.instances = [instances]
         return allocation_policy
 
-    def get_snakefile(self):
+    def read_snakefile(self):
         """
         Get the content of the Snakefile to write to the worker.
         

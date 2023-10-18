@@ -270,15 +270,11 @@ rule hello_world:
 - What leads to STATE_UNSPECIFIED?
 - Should MPI barriers / install be integrated into wrappers or here?
 - For All (Google Gatch) How do we represent more than one runnable in a step?
-- For Johannes: Best strategy to install Snakemake without a container (I'm using simplest means with system python for now)
 - For Johannes: Why can't we use debug logging for executor plugins? I instead need to use info and make it very verbose.
-- For Johannes: we should be able to update the aux metadata for a job (and have it persist)?
 - For All: How do we want to use [COS](https://cloud.google.com/container-optimized-os/docs/concepts/features-and-benefits)? It would allow a container base to be used instead I think?
 - For Google: How do we get the same log for the final job (e.g., to show to the user?) [I don't see it here](https://github.com/googleapis/google-cloud-python/blob/8235ef62943bae4bb574c4d5555ce46db231c7d2/packages/google-cloud-batch/google/cloud/batch_v1/types/batch.py#L313-L340) (only status messages)
 - For Google: there should be a quick exit / fail if something in the script fails (it seems to keep going)
-- For Johannes: the snakemake-interface-executor-plugins doesn't work with the latest from mamba, can we nudge it back?
 
-> ERROR: Package 'snakemake-interface-executor-plugins' requires a different Python: 3.10.12 not in '<4.0,>=3.11'
 
 ## Notes
 
