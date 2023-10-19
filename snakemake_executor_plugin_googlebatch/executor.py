@@ -10,10 +10,11 @@ from snakemake_interface_executor_plugins.jobs import (
     JobExecutorInterface,
 )
 from snakemake.common import get_container_image
-from snakemake_interface_common.exceptions import WorkflowError  # noqa
 import snakemake_executor_plugin_googlebatch.utils as utils
 import snakemake_executor_plugin_googlebatch.command as cmdutil
+from snakemake_executor_plugin_googlebatch.build import BuildPackage
 
+from google.api_core import retry
 from google.cloud import batch_v1
 
 
@@ -31,53 +32,57 @@ class GoogleBatchExecutor(RemoteExecutor):
         # There is an async client but I'm not sure we'd get much benefit
         self.batch = batch_v1.BatchServiceClient()
 
+        # We always generate a build source package to start
+        self._bp = BuildPackage(self.workflow, self.dag, self.logger)
+        self._bp.generate_package()
+        self._bp.upload()
+
     def get_param(self, job, param):
         """
-		Simple courtesy function to get a job resource and fall back to defaults.
-		
-		1. First preference goes to googlebatch_ directive in step
-		2. Second preference goes to command line flag
-		3. Third preference falls back to default
-		""" 
-        return job.resources.get(f"googlebatch_{param}") or getattr(self.executor_settings, param, None)
+        Simple courtesy function to get a job resource and fall back to defaults.
 
+        1. First preference goes to googlebatch_ directive in step
+        2. Second preference goes to command line flag
+        3. Third preference falls back to default
+        """
+        return job.resources.get(f"googlebatch_{param}") or getattr(
+            self.executor_settings, param, None
+        )
 
     def get_task_resources(self, job):
         """
         Get task compute resources.
 
-        CPU Milli are milliseconds per cpu-second. 
+        CPU Milli are milliseconds per cpu-second.
         These are the requirement % of a single CPUs.
         """
         resources = batch_v1.ComputeResource()
-        memory = self.get_param(job, "memory") 
-        cpu_milli = self.get_param(job, "cpu_milli") 
+        memory = self.get_param(job, "memory")
+        cpu_milli = self.get_param(job, "cpu_milli")
         resources.cpu_milli = cpu_milli
         resources.memory_mib = memory
         return resources
-
 
     def get_labels(self, job):
         """
         Derive default labels for the job (and add custom)
         """
         labels = {"snakemake-job": job.name}
-        for contender in self.get_param(job, "labels").split(','):
+        for contender in self.get_param(job, "labels").split(","):
             if not contender:
                 continue
             if "=" not in contender:
                 self.logger.warning(f'Label group {contender} is missing an "="')
                 continue
-            key, value = contender.split('=', 1)
+            key, value = contender.split("=", 1)
             labels[key] = value
         return labels
-
 
     def add_storage(self, job, task):
         """
         Add storage for a task, which requires a bucket and mount path.
         """
-        bucket = self.get_param(job, "bucket") 
+        bucket = self.get_param(job, "bucket")
         if not bucket:
             return
 
@@ -88,25 +93,26 @@ class GoogleBatchExecutor(RemoteExecutor):
         gcs_volume.mount_path = self.get_param(job, "mount_path")
         task.volumes = [gcs_volume]
 
-
     def generate_jobid(self, job):
         """
         Generate a random jobid
         """
         uid = str(uuid.uuid4())
-        return job.name.replace('_', '-') + "-" + uid[0:6]
+        return job.name.replace("_", "-") + "-" + uid[0:6]
 
     def validate(self, job):
         """
         Ensure the choices of arguments make sense.
         """
         container = self.get_container(job)
-        family = self.get_param(job, "image_family") 
+        family = self.get_param(job, "image_family")
 
         # We can't take a custom container if batch-cos is not set
         # We only give a warning here in case it's a one-off setting
         if family != "batch-cos" and container:
-            self.logger.warning(f"Job {job} has container without image_family batch-cos.")
+            self.logger.warning(
+                f"Job {job} has container without image_family batch-cos."
+            )
 
     def get_container(self, job):
         """
@@ -121,7 +127,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         This largely depends on the image family selected to either install
         snakemake or run a container on batch-cos.
         """
-        family = self.get_param(job, "image_family") 
+        family = self.get_param(job, "image_family")
 
         # If batch-cos is the image family we will use a container
         container = self.get_container(job) or get_container_image()
@@ -131,7 +137,7 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # Derive the command. E.g., COS will likely run the snakemake container
         # And installs depend on the base operating system we find
-        command = cmdutil.derive_setup_command(container, family, snakefile)        
+        command = cmdutil.derive_setup_command(container, family, snakefile)
         self.logger.info("\n🌟️ Setup Command:")
         print(command)
         return command
@@ -143,9 +149,12 @@ class GoogleBatchExecutor(RemoteExecutor):
         This largely depends on the image family selected to either install
         snakemake or run a container on batch-cos.
         """
-        family = self.get_param(job, "image_family") 
+        family = self.get_param(job, "image_family")
         command = self.format_job_exec(job)
-        command = cmdutil.derive_command(command, family)
+
+        # Precommands include download the build archive
+        pre_commands = [self._bp.download_snippet]
+        command = cmdutil.derive_command(command, family, pre_commands)
         self.logger.info("\n🐍️ Snakemake Command:")
         print(command)
         return command
@@ -162,8 +171,8 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # This will create one simple runnable for a task
         task = batch_v1.TaskSpec()
-        task.max_retry_count = self.get_param(job, "retry_count") 
-        task.max_run_duration = self.get_param(job, "max_run_duration") 
+        task.max_retry_count = self.get_param(job, "retry_count")
+        task.max_run_duration = self.get_param(job, "max_run_duration")
 
         # A single runnable to execute snakemake
         runnable = batch_v1.Runnable()
@@ -179,7 +188,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         barrier = batch_v1.Runnable()
         barrier.barrier = batch_v1.Runnable.Barrier()
         barrier.barrier.name = "wait-for-setup"
-        task.runnables = [setup, barrier, runnable] 
+        task.runnables = [setup, barrier, runnable]
 
         # Are we adding storage?
         self.add_storage(job, task)
@@ -190,8 +199,8 @@ class GoogleBatchExecutor(RemoteExecutor):
         # Tasks are grouped inside a job using TaskGroups.
         # Currently, it's possible to have only one task group.
         group = batch_v1.TaskGroup()
-        group.task_count_per_node = self.get_param(job, "work_tasks_per_node") 
-        group.task_count = self.get_param(job, "work_tasks") 
+        group.task_count_per_node = self.get_param(job, "work_tasks_per_node")
+        group.task_count = self.get_param(job, "work_tasks")
         group.task_spec = task
 
         # Right now I don't see a need to not allow this
@@ -223,34 +232,34 @@ class GoogleBatchExecutor(RemoteExecutor):
         aux = {"batch_job": createdjob, "logfile": logfile, "last_seen": None}
 
         # Record job info - the name is what we use to get a status later
-        self.report_job_submission(SubmittedJobInfo(job, external_jobid=createdjob.name, aux=aux))
+        self.report_job_submission(
+            SubmittedJobInfo(job, external_jobid=createdjob.name, aux=aux)
+        )
 
-
-# TODO need to think about how a more complex startup script will work
-# This would go after the variable specification
+    # TODO need to think about how a more complex startup script will work
+    # This would go after the variable specification
     # Prepare the script templates
-#    run_template = jinja2.Template(run_script)
-#    runscript = run_template.render(
-#        {
-#            "tasks": tasks,
-#            "tasks_per_node": tasks_per_node,
-#            "outdir": outdir,
-#        }
-#    )
+    #    run_template = jinja2.Template(run_script)
+    #    runscript = run_template.render(
+    #        {
+    #            "tasks": tasks,
+    #            "tasks_per_node": tasks_per_node,
+    #            "outdir": outdir,
+    #        }
+    #    )
 
-#    setup_template = jinja2.Template(setup_script)
-#    script = setup_template.render({"outdir": outdir})
+    #    setup_template = jinja2.Template(setup_script)
+    #    script = setup_template.render({"outdir": outdir})
 
     # Write over same file here, yes bad practice and lazy
-#    template_and_write("setup.sh", script, bucket_name, "hello-world-mpi/setup.sh")
-#    template_and_write("run.sh", runscript, bucket_name, "hello-world-mpi/run.sh")
-#    upload_to_bucket("hello-world-mpi/Makefile", "Makefile", bucket_name)
+    #    template_and_write("setup.sh", script, bucket_name, "hello-world-mpi/setup.sh")
+    #    template_and_write("run.sh", runscript, bucket_name, "hello-world-mpi/run.sh")
+    #    upload_to_bucket("hello-world-mpi/Makefile", "Makefile", bucket_name)
 
-# TODO need to think about how we want to separate some setup section (and barrier)
+    # TODO need to think about how we want to separate some setup section (and barrier)
 
-#    # Define what will be done as part of the job.
-#    task = batch_v1.TaskSpec()
-
+    #    # Define what will be done as part of the job.
+    #    task = batch_v1.TaskSpec()
 
     def project_parent(self, job):
         """
@@ -260,7 +269,6 @@ class GoogleBatchExecutor(RemoteExecutor):
         region = self.get_param(job, "region")
         return f"projects/{project_id}/locations/{region}"
 
-
     def get_allocation_policy(self, job):
         """
         Get allocation policy for a job. This includes:
@@ -269,11 +277,11 @@ class GoogleBatchExecutor(RemoteExecutor):
         A boot disk attached to the allocation policy.
         Instances with a particular machine / image family.
         """
-        machine_type = self.get_param(job, "machine_type") 
-        family = self.get_param(job, "image_family") 
-        project = self.get_param(job, "image_project") 
+        machine_type = self.get_param(job, "machine_type")
+        family = self.get_param(job, "image_family")
+        project = self.get_param(job, "image_project")
 
-        # Disks is how we specify the image we want (we need centos to get MPI working)        
+        # Disks is how we specify the image we want (we need centos to get MPI working)
         # This could also be batch-centos, batch-debian, batch-cos
         # but MPI won't work on all of those
         boot_disk = batch_v1.AllocationPolicy.Disk()
@@ -294,7 +302,7 @@ class GoogleBatchExecutor(RemoteExecutor):
     def read_snakefile(self):
         """
         Get the content of the Snakefile to write to the worker.
-        
+
         This might need to be improved to support storage, etc.
         """
         assert os.path.exists(self.workflow.main_snakefile)
@@ -306,7 +314,6 @@ class GoogleBatchExecutor(RemoteExecutor):
         """
         assert os.path.exists(self.workflow.main_snakefile)
         return "Snakefile"
-
 
     async def check_active_jobs(
         self, active_jobs: List[SubmittedJobInfo]
@@ -331,7 +338,7 @@ class GoogleBatchExecutor(RemoteExecutor):
                     last_seen = event.event_time.nanosecond
 
             # Update last seen for next time (TODO not sure this is sticking)
-            j.aux['last_seen'] = last_seen
+            j.aux["last_seen"] = last_seen
 
             # Possible statuses:
             # RUNNING
@@ -352,7 +359,6 @@ class GoogleBatchExecutor(RemoteExecutor):
             else:
                 yield j
 
-
     def cancel_jobs(self, active_jobs: List[SubmittedJobInfo]):
         """
         cancel all active jobs. This method is called when snakemake is interrupted.
@@ -365,4 +371,26 @@ class GoogleBatchExecutor(RemoteExecutor):
             self.logger.info(f"Waiting for job {jobid} to cancel...")
             response = operation.result()
             self.logger.info(response)
-        # self.shutdown()
+
+        # Ensure we cleanup cache, etc.
+        self.shutdown()
+
+    def shutdown(self):
+        """
+        Shutdown deletes build packages if the user didn't request to clean
+        up the cache. At this point we've already cancelled running jobs.
+        """
+        save_cache = self.workflow.executor_settings.keep_source_cache
+
+        @retry.Retry(predicate=utils.google_cloud_retry)
+        def clear_cache():
+            self._bp.clear()
+
+        # Delete build source packages only if user regooglquested no cache
+        if not save_cache:
+            self.logger.info("Requested to save workflow sources, skipping cleanup.")
+        else:
+            clear_cache()
+
+        # Call parent shutdown
+        super().shutdown()

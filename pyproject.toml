@@ -9,6 +9,9 @@ packages = [{include = "snakemake_executor_plugin_googlebatch"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 google-cloud-batch = "^0.17.1"
+requests = "^2.31.0"
+google-api-core = "^2.12.0"
+google-cloud-storage = "^2.12.0"
 
 
 [build-system]

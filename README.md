@@ -51,18 +51,19 @@ And custom arguments can be any of the following, either on the command line or 
 | project | The name of the Google Project | `--googlebatch-project` | str | `SNAKEMAKE_GOOGLEBATCH_PROJECT` | True |  unset |
 | region | The name of the Google Project region (e.g., us-central1) | str | `--googlebatch-region` |`SNAKEMAKE_GOOGLEBATCH_REGION` | True | unset |
 | machine_type | Google Cloud machine type or VM (mpitune configurations are on c2 and c2d family) | str | `--googlebatch-machine-type` | | False | c2-standard-4 |
-| image_family | Google Cloud image family (defaults to hpc-centos-7) | str | `--googlebatch-image-family` | | False | hpc-centos-7 |
-| image_project | The project the selected image belongs to (defaults to cloud-hpc-image-public) | str |  `--googlebatch-image-project` | | False | cloud-hpc-image-public |
-| bucket | A bucket to mount with snakemake data | str | `--googlebatch-bucket` | | False |  unset |
-| mount_path | The mount path for a bucket (if provided) | str | `--googlebatch-mount-path` | | False | /mnt/share |
-| work_tasks | The default number of work tasks (these are NOT MPI ranks) | int | `--googlebatch-work-tasks` | | False | 1 |
-| cpu_milli | Milliseconds per cpu-second | int| `--googlebatch-cpu-milli` | | False | 1000 |
-| work_tasks_per_node | The default number of work tasks per node (Google Batch calls these tasks) | int | `--googlebatch-work-tasks-per-node` | | False | 1 |
-| memory | Memory in MiB | int | `--googlebatch-memory` | | False | 1000 |
-| retry_count | Retry count (default to 1) | int | `--googlebatch-retry-count` | | False | 1 |
-| max_run_duration | Maximum run duration, string (e.g., 3600s) | str | `--googlebatch-max-run-duration` | | False | "3600s" |
-| labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) | str | `--googlebatch-labels` | | False | unset|
-| container | Container to use (only when image_family is batch-cos) | str | `--googlebatch-container` | | False | unset|
+| image_family | Google Cloud image family (defaults to hpc-centos-7) | `--googlebatch-image-family` | str | | False | hpc-centos-7 |
+| image_project | The project the selected image belongs to (defaults to cloud-hpc-image-public) | `--googlebatch-image-project` | str | | False | cloud-hpc-image-public |
+| bucket | A bucket to mount with snakemake data | `--googlebatch-bucket` | str | `SNAKEMAKE_GOOGLEBATCH_BUCKET` | True |  unset |
+| mount_path | The mount path for a bucket (if provided) | `--googlebatch-mount-path` | str | | False | /mnt/share |
+| work_tasks | The default number of work tasks (these are NOT MPI ranks) | `--googlebatch-work-tasks` | int | | False | 1 |
+| cpu_milli | Milliseconds per cpu-second | `--googlebatch-cpu-milli` | int | | False | 1000 |
+| work_tasks_per_node | The default number of work tasks per node (Google Batch calls these tasks) | `--googlebatch-work-tasks-per-node` | int | | False | 1 |
+| memory | Memory in MiB | `--googlebatch-memory` | int | | False | 1000 |
+| retry_count | Retry count (default to 1) | `--googlebatch-retry-count` | int | | False | 1 |
+| max_run_duration | Maximum run duration, string (e.g., 3600s) | `--googlebatch-max-run-duration` | str | | False | "3600s" |
+| labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) |`--googlebatch-labels` | str | | False | unset|
+| container | Container to use (only when image_family is batch-cos) | `--googlebatch-container` | str | | False | unset|
+| keep_source_cache | Cache workflows in your Google Cloud Storage Bucket | `--googlebatch-keep-source-cache` | bool | | False | False |
 
 For machine type, note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
 Also note that you can customize the machine type on the level of the step (see [Step Options](#step-options) below).
@@ -275,10 +276,10 @@ rule hello_world:
 - For Google: How do we get the same log for the final job (e.g., to show to the user?) [I don't see it here](https://github.com/googleapis/google-cloud-python/blob/8235ef62943bae4bb574c4d5555ce46db231c7d2/packages/google-cloud-batch/google/cloud/batch_v1/types/batch.py#L313-L340) (only status messages)
 - For Google: there should be a quick exit / fail if something in the script fails (it seems to keep going)
 
-
 ## Notes
 
-- I started with "basic" approaches for installing Snakemake (e.g., system Python) and it quickly got messy. Better - we should use one approach (mamba across families)
+- Conda is used to install Snakemake and dependencies.
+- The COS (container OS) uses the default Snakemake container, unless you specify differently.
 
 ### Feedback
 
@@ -293,13 +294,15 @@ rule hello_world:
 
 ### Tutorial
 
-For this tutorial, we will start int he Example directory.
+For this tutorial, we will start in the Example directory.
+Note that `--googlebatch-bucket` is required as a bucket to put workflow cache assets under "cache" 
+If it does not exist it will be created.
 
 ```bash
 $ cd ./example
 
 # This says "use the custom executor module named snakemake_executor_plugin_googlebatch"
-$ snakemake --jobs 1 --executor googlebatch
+$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur
 ```
 
 ```console

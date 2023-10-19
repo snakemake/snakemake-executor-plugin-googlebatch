@@ -1,4 +1,3 @@
-
 # Templates for the command writer
 
 write_snakefile = """
@@ -15,15 +14,21 @@ export LANG=C.UTF-8
 export SHELL=/bin/bash
 """
 
-snakemake_centos_install = snakemake_base_environment + """
+snakemake_centos_install = (
+    snakemake_base_environment
+    + """
 sudo yum update -y
 sudo yum install -y wget bzip2 ca-certificates gnupg2 squashfs-tools git
 """
+)
 
-snakemake_debian_install = snakemake_base_environment + """
+snakemake_debian_install = (
+    snakemake_base_environment
+    + """
 sudo apt-get update -y
 sudo apt-get install -y wget bzip2 ca-certificates gnupg2 squashfs-tools git
 """
+)
 
 install_snakemake = """
 # Only the main job should install conda (rest can use it)
@@ -51,11 +56,14 @@ if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
 fi
 """
 
-run_snakemake = snakemake_base_environment + """
+run_snakemake = (
+    snakemake_base_environment
+    + """
 $(pwd)
 ls
 which snakemake || whereis snakemake
 """
+)
 
 
 class CommandWriter:
@@ -64,18 +72,25 @@ class CommandWriter:
 
     This is intended for Google Batch operating systems.
     """
+
     def __init__(self, command=None, container=None, snakefile=None):
-        self.command = command 
+        self.command = command
         self.container = container
 
         # This is the contents of the snakefile and not the path
         self.snakefile = snakefile
 
-    def run_command(self):
+    def run_command(self, pre_commands=None):
         """
         Write the command script for debian
+
+        We allow one or more pre-commands (e.g., to download artifacts)
         """
-        return run_snakemake + self.command
+        pre_commands = pre_commands or []
+        command = ""
+        for pre_command in pre_commands:
+            command += pre_command + "\n"
+        return command + "\n" + run_snakemake + self.command
 
     def setup_debian(self):
         """
@@ -94,7 +109,7 @@ class CommandWriter:
         Shared logic to template the setup command (debian or centos)
         """
         command = template
-        command += write_snakefile % self.snakefile 
+        command += write_snakefile % self.snakefile
         command += install_snakemake
         return command
 
@@ -124,14 +139,14 @@ def derive_setup_command(container, family, snakefile):
         return writer.setup_centos()
 
     # batch-debian
-    return writer.setup_debian()    
+    return writer.setup_debian()
 
 
-def derive_command(command, family):
+def derive_command(command, family, pre_commands=None):
     """
     Given a job command, derive command based on family.
     """
-    writer = CommandWriter(command)    
+    writer = CommandWriter(command)
     if family == "batch-cos":
         return writer.for_cos()
-    return writer.run_command()
+    return writer.run_command(pre_commands)
