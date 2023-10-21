@@ -41,7 +41,7 @@ class ExecutorSettings(ExecutorSettingsBase):
     machine_type: Optional[str] = field(
         default="c2-standard-4",
         metadata={
-            "help": "Google Cloud machine type or VM (mpitune configurations are on c2 and c2d family)",
+            "help": "Google Cloud machine type or VM (mpitune on c2 and c2d family)",
             "env_var": False,
             "required": False,
         },
@@ -50,7 +50,8 @@ class ExecutorSettings(ExecutorSettingsBase):
     labels: Optional[str] = field(
         default="",
         metadata={
-            "help": "Comma separated key value pairs to label job (e.g., model=a3,stage=test)",
+            "help": "Comma separated key value pairs to label job "
+            "(e.g., model=a3,stage=test)",
             "env_var": False,
             "required": False,
         },
@@ -69,7 +70,7 @@ class ExecutorSettings(ExecutorSettingsBase):
     container: Optional[str] = field(
         default=None,
         metadata={
-            "help": "If batch-cos is set for image family, a container is allowed (it should have snakemake).",
+            "help": "A snakemake container for batch-cos image family.",
             "env_var": False,
             "required": False,
         },
@@ -78,7 +79,7 @@ class ExecutorSettings(ExecutorSettingsBase):
     image_project: Optional[str] = field(
         default="cloud-hpc-image-public",
         metadata={
-            "help": "The project the selected image belongs to (defaults to cloud-hpc-image-public)",
+            "help": "Selected image project (defaults cloud-hpc-image-public)",
             "env_var": False,
             "required": False,
         },
@@ -123,7 +124,7 @@ class ExecutorSettings(ExecutorSettingsBase):
     work_tasks_per_node: Optional[str] = field(
         default=1,
         metadata={
-            "help": "The default number of work tasks per node (these are NOT MPI ranks)",
+            "help": "The default number of work tasks per node (NOT MPI ranks)",
             "env_var": False,
             "required": False,
         },
