@@ -36,17 +36,20 @@ echo "I am batch index ${BATCH_TASK_INDEX}"
 export PATH=/opt/conda/bin:${PATH}
 if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
     workdir=$(pwd)
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ./miniconda.sh
+    url=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    wget ${url} -O ./miniconda.sh
     chmod +x ./miniconda.sh
     bash ./miniconda.sh -b -u -p /opt/conda
     rm -rf ./miniconda.sh
-    conda config --system --set channel_priority strict 
+    conda config --system --set channel_priority strict
     which python
     /opt/conda/bin/python --version
-    git clone --depth 1 https://github.com/snakemake/snakemake-interface-common /tmp/snakemake-common
+    url=https://github.com/snakemake/snakemake-interface-common
+    git clone --depth 1 ${url} /tmp/snakemake-common
     cd /tmp/snakemake-common
     /opt/conda/bin/python -m pip install .
-    git clone --depth 1 https://github.com/snakemake/snakemake-interface-executor-plugins /tmp/snakemake-plugin
+    url=https://github.com/snakemake/snakemake-interface-executor-plugins
+    git clone --depth 1 ${url} /tmp/snakemake-plugin
     cd /tmp/snakemake-plugin
     /opt/conda/bin/python -m pip install .
     git clone --depth 1 https://github.com/snakemake/snakemake /tmp/snakemake
@@ -121,7 +124,8 @@ class CommandWriter:
         TODO not tested yet
         """
         command = write_snakefile % self.snakefile
-        docker = "docker run -it -v $PWD/Snakefile:./Snakefile {self.container} {self.command}"
+        volume = "$PWD/Snakefile:./Snakefile"
+        docker = f"docker run -it -v {volume} {self.container} {self.command}"
         command += docker
         return command
 

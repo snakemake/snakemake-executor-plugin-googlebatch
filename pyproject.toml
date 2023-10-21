@@ -2,7 +2,10 @@
 name = "snakemake-executor-plugin-googlebatch"
 version = "0.1.0"
 description = ""
-authors = ["vsoch <vsoch@users.noreply.github.com>"]
+authors = [
+    "Vanessa Sochat <sochat1@llnl.gov>",
+    "Johannes Koester <johannes.koester@uni-due.de>"
+]
 readme = "README.md"
 packages = [{include = "snakemake_executor_plugin_googlebatch"}]
 
@@ -12,7 +15,16 @@ google-cloud-batch = "^0.17.1"
 requests = "^2.31.0"
 google-api-core = "^2.12.0"
 google-cloud-storage = "^2.12.0"
+snakemake-interface-common = {git = "https://github.com/snakemake/snakemake-interface-common.git"}
+snakemake-interface-executor-plugins = {git = "https://github.com/snakemake/snakemake-interface-executor-plugins.git"}
+snakemake-interface_storage-plugins = {git = "https://github.com/snakemake/snakemake-interface-storage-plugins.git"}
 
+[tool.poetry.group.dev.dependencies]
+black = "^23.9.1"
+flake8 = "^6.1.0"
+coverage = "^7.3.1"
+pytest = "^7.4.2"
+snakemake = {git = "https://github.com/snakemake/snakemake.git"}
 
 [build-system]
 requires = ["poetry-core"]

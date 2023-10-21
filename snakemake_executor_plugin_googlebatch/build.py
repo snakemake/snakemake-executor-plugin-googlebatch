@@ -13,12 +13,13 @@ import os
 
 download_snippet = """
 # Download the current storage archive
-wget -O /download.py https://github.com/rse-ops/snakemake-executor-plugin-googlebatch/blob/main/script/downloader.py
+url=https://github.com/rse-ops/snakemake-executor-plugin-googlebatch/blob/main/script/downloader.py
+wget -O /download.py ${url}
 
-# Download <bucket name> <package>
+# Download <bucket name> <package>z
 python /download.py download %s %s /tmp/workdir.tar.gz
 tar -xzvf /tmp/workdir.tar.gz
-"""
+"""  # noqa
 
 
 class BuildPackage:
@@ -115,7 +116,7 @@ class BuildPackage:
             )
         self.logger.info("bucket=%s" % self.bucket.name)
 
-    def check_source_size(self, filename, warning_size_gb=0.2):
+    def check_source_size(self, filename, warn_size_gb=0.2):
         """
         Check the source file size.
 
@@ -124,10 +125,10 @@ class BuildPackage:
         packages to be small, we set a warning at 200MB (0.2GB).
         """
         gb = utils.bytesto(os.stat(filename).st_size, "g")
-        if gb > warning_size_gb:
+        if gb > warn_size_gb:
             self.logger.warning(
-                f"File {filename} (size {gb} GB) is greater than the {warning_size_gb} GB "
-                f"suggested size. Consider uploading larger files to storage first."
+                f"File {filename} (size {gb} GB) is greater than the {warn_size_gb} "
+                f"GB suggested size. Consider uploading larger files to storage first."
             )
         return filename
 

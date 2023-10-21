@@ -287,8 +287,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         boot_disk = batch_v1.AllocationPolicy.Disk()
         boot_disk.image = f"projects/{project}/global/images/family/{family}"
 
-        # Policies are used to define on what kind of virtual machines the tasks will run on.
-        # https://github.com/googleapis/python-batch/blob/main/google/cloud/batch_v1/types/job.py#L383
+        # Policies are used to define on what kind of VM the tasks will run on.
         allocation_policy = batch_v1.AllocationPolicy()
         policy = batch_v1.AllocationPolicy.InstancePolicy()
         policy.machine_type = machine_type
