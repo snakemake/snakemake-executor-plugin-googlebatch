@@ -1,14 +1,14 @@
 # Templates for the command writer
 
-write_snakefile = """
-cat <<EOF > ./Snakefile
+import snakemake_executor_plugin_googlebatch.snippet as sniputil
+
+write_snakefile = """cat <<EOF > ./Snakefile
 %s
 EOF
 cat ./Snakefile
 """
 
-snakemake_base_environment = """
-export HOME=/root
+snakemake_base_environment = """export HOME=/root
 export PATH=/opt/conda/bin:${PATH}
 export LANG=C.UTF-8
 export SHELL=/bin/bash
@@ -59,7 +59,7 @@ if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
 fi
 """
 
-run_snakemake = (
+check_for_snakemake = (
     snakemake_base_environment
     + """
 $(pwd)
@@ -76,16 +76,32 @@ class CommandWriter:
     This is intended for Google Batch operating systems.
     """
 
-    def __init__(self, command=None, container=None, snakefile=None):
+    def __init__(
+        self, command=None, container=None, snakefile=None, snippets=None, settings=None
+    ):
         self.command = command
         self.container = container
 
         # This is the contents of the snakefile and not the path
         self.snakefile = snakefile
+        self.settings = settings
 
-    def run_command(self, pre_commands=None):
+        # Prepare (and validate) any provided snippets for the job
+        self.load_snippets(snippets)
+
+    def load_snippets(self, spec):
         """
-        Write the command script for debian
+        Given a spec, load into snippets for the job (setup and run)
+
+        We also validate here (early on) to exit early if needed
+        """
+        # Settings are important to provide as they have params
+        self.snippets = sniputil.SnippetGroup(spec, self.settings)
+        self.snippets.validate()
+
+    def run(self, pre_commands=None):
+        """
+        Write the command script. This is likely shared.
 
         We allow one or more pre-commands (e.g., to download artifacts)
         """
@@ -93,64 +109,97 @@ class CommandWriter:
         command = ""
         for pre_command in pre_commands:
             command += pre_command + "\n"
-        return command + "\n" + run_snakemake + self.command
 
-    def setup_debian(self):
-        """
-        Write the setup command script for debian
-        """
-        return self._template_setup(snakemake_debian_install)
+        # Ensure we check for snakemake
+        command += "\n" + check_for_snakemake
 
-    def setup_centos(self):
-        """
-        Write the setup command script for debian
-        """
-        return self._template_setup(snakemake_centos_install)
+        # If we have a snippet group, add snippets before installing snakemake
+        if self.snippets:
+            command += self.snippets.render_run(self.command, self.container)
 
-    def _template_setup(self, template):
+        # Don't include the main command twice
+        if self.snippets.has_run_command_snippet:
+            return command
+        return command + "\n" + self.command
+
+    def setup(self):
         """
-        Shared logic to template the setup command (debian or centos)
+        Derive the correct setup command based on the family.
+        """
+        raise NotImplementedError(f"Setup is not implemented for {self}.")
+
+    def _template_setup(self, template, use_container=False):
+        """
+        Shared logic to template the setup command.
         """
         command = template
         command += write_snakefile % self.snakefile
-        command += install_snakemake
+
+        # If we have a snippet group, add snippets before installing snakemake
+        if self.snippets:
+            command += self.snippets.render_setup(self.command, self.container)
+
+        # If we don't use container, install snakemkae to VM
+        if not use_container:
+            command += install_snakemake
         return command
 
-    def for_cos(self):
+
+class COSWriter(CommandWriter):
+    """
+    A custom writer for a cos-based family.
+    """
+
+    def setup(self):
         """
-        Write the command script for cos.
+        We pre-pull the container so they start at the same time.
+        """
+        command = f"docker pull {self.container}"
+        return self._template_setup(command, use_container=True)
+
+    def run(self, pre_commands=None):
+        """
+        Write the run command script for cos.
 
         For this command we assume the container has python as python3
-        TODO not tested yet
         """
-        command = write_snakefile % self.snakefile
+        pre_commands = pre_commands or []
+        command = ""
+        for pre_command in pre_commands:
+            command += pre_command + "\n"
+        command += write_snakefile % self.snakefile
         volume = "$PWD/Snakefile:./Snakefile"
         docker = f"docker run -it -v {volume} {self.container} {self.command}"
         command += docker
         return command
 
 
-def derive_setup_command(container, family, snakefile):
+class DebianWriter(CommandWriter):
     """
-    Derive the setup command (between the barrier and the main task)
+    A custom writer for a debian-based family.
     """
-    writer = CommandWriter(container=container, snakefile=snakefile)
-    if family == "batch-cos":
-        return writer.setup_cos()
 
-    # hpc-centos-<x> or batch-centos
-    if "centos" in family:
-        return writer.setup_centos()
-
-    # batch-debian
-    return writer.setup_debian()
+    def setup(self):
+        return self._template_setup(snakemake_debian_install)
 
 
-def derive_command(command, family, pre_commands=None):
+class CentosWriter(CommandWriter):
     """
-    Given a job command, derive command based on family.
+    A custom writer for a centos-based family.
     """
-    writer = CommandWriter(command)
-    if family == "batch-cos":
-        return writer.for_cos()
-    return writer.run_command(pre_commands)
+
+    def setup(self):
+        return self._template_setup(snakemake_centos_install)
+
+
+def get_writer(family):
+    """
+    Instantiate a writer based on a family.
+    """
+    # https://cloud.google.com/batch/docs/view-os-images
+    if "batch-cos" in family:
+        return COSWriter
+    if "debian" in family:
+        return DebianWriter
+    # Google cloud seems to prefer rocky/centos, use as default
+    return CentosWriter

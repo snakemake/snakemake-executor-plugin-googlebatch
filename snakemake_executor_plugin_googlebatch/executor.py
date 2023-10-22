@@ -14,6 +14,7 @@ import snakemake_executor_plugin_googlebatch.utils as utils
 import snakemake_executor_plugin_googlebatch.command as cmdutil
 from snakemake_executor_plugin_googlebatch.build import BuildPackage
 
+from google.api_core.exceptions import DeadlineExceeded
 from google.api_core import retry
 from google.cloud import batch_v1
 
@@ -109,55 +110,45 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # We can't take a custom container if batch-cos is not set
         # We only give a warning here in case it's a one-off setting
-        if family != "batch-cos" and container:
+        # https://cloud.google.com/batch/docs/vm-os-environment-overview
+        if "batch-cos" not in family and container:
             self.logger.warning(
-                f"Job {job} has container without image_family batch-cos."
+                f"Job {job} has container without image_family batch-cos*."
             )
 
     def get_container(self, job):
         """
         Get container intended for a job
-        """
-        return job.resources.get("container") or self.executor_settings.container
 
-    def derive_setup_command(self, job):
+        We first use the googlebatch_container (--googlebatch-container) and then
+        fall back to remote execution settings and then snakemake default.
         """
-        Derive a setup command for a job.
+        return (
+            job.resources.get("container")
+            or self.executor_settings.container
+            or self.workflow.remote_execution_settings.container_image
+            or get_container_image()
+        )
 
-        This largely depends on the image family selected to either install
-        snakemake or run a container on batch-cos.
+    def get_command_writer(self, job):
+        """
+        Get a command writer for a job.
         """
         family = self.get_param(job, "image_family")
-
-        # If batch-cos is the image family we will use a container
-        container = self.get_container(job) or get_container_image()
-
-        # We will write the Snakefile to the worker (this is the contents)
+        container = self.get_container(job)
+        command = self.format_job_exec(job)
         snakefile = self.read_snakefile()
 
-        # Derive the command. E.g., COS will likely run the snakemake container
-        # And installs depend on the base operating system we find
-        command = cmdutil.derive_setup_command(container, family, snakefile)
-        self.logger.info("\n🌟️ Setup Command:")
-        print(command)
-        return command
+        # Any custom snippets
+        snippets = self.get_param(job, "snippets")
 
-    def derive_command(self, job):
-        """
-        Derive a command for a job.
-
-        This largely depends on the image family selected to either install
-        snakemake or run a container on batch-cos.
-        """
-        family = self.get_param(job, "image_family")
-        command = self.format_job_exec(job)
-
-        # Precommands include download the build archive
-        pre_commands = [self._bp.download_snippet]
-        command = cmdutil.derive_command(command, family, pre_commands)
-        self.logger.info("\n🐍️ Snakemake Command:")
-        print(command)
-        return command
+        return cmdutil.get_writer(family)(
+            command=command,
+            container=container,
+            snakefile=snakefile,
+            snippets=snippets,
+            settings=self.workflow.executor_settings,
+        )
 
     def run_job(self, job: JobExecutorInterface):
         """
@@ -174,15 +165,31 @@ class GoogleBatchExecutor(RemoteExecutor):
         task.max_retry_count = self.get_param(job, "retry_count")
         task.max_run_duration = self.get_param(job, "max_run_duration")
 
+        # The command writer prepares the final command, snippets, etc.
+        writer = self.get_command_writer(job)
+
+        # Setup command
+        setup_command = writer.setup()
+        self.logger.info("\n🌟️ Setup Command:")
+        print(setup_command)
+
+        # Precommands include download the build archive
+        pre_commands = [self._bp.download_snippet]
+
+        # Run command
+        run_command = writer.run(pre_commands)
+        self.logger.info("\n🐍️ Snakemake Command:")
+        print(run_command)
+
         # A single runnable to execute snakemake
         runnable = batch_v1.Runnable()
         runnable.script = batch_v1.Runnable.Script()
-        runnable.script.text = self.derive_command(job)
+        runnable.script.text = run_command
 
         # Snakemake setup must finish before snakemake is run
         setup = batch_v1.Runnable()
         setup.script = batch_v1.Runnable.Script()
-        setup.script.text = self.derive_setup_command(job)
+        setup.script.text = setup_command
 
         # This will ensure all nodes finish first
         barrier = batch_v1.Runnable()
@@ -324,11 +331,16 @@ class GoogleBatchExecutor(RemoteExecutor):
         for j in active_jobs:
             jobid = j.external_jobid
             request = batch_v1.GetJobRequest(name=jobid)
-            response = self.batch.get_job(request=request)
 
             # Aux logs are consistently here
             aux_logs = [j.aux["logfile"]]
             last_seen = j.aux["last_seen"]
+
+            try:
+                response = self.batch.get_job(request=request)
+            except DeadlineExceeded:
+                msg = f"Google Batch job '{j.external_jobid}' exceeded deadline. "
+                self.report_job_error(j, msg=msg, aux_logs=aux_logs)
 
             self.logger.info(f"Job {jobid} has state {response.status.state.name}")
             for event in response.status.status_events:

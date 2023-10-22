@@ -5,7 +5,6 @@
 This is the [Google Batch](https://cloud.google.com/batch/docs/get-started) external executor plugin for snakemake.
 If you are migrating from Google Life Sciences see [this documentation](https://cloud.google.com/batch/docs/migrate-to-batch-from-cloud-life-sciences). For the underlying Python SDK, see [google-cloud-batch](https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-batch) on GitHub.
 
-
 ## Usage
 
 ### Setup
@@ -42,6 +41,19 @@ export SNAKEMAKE_GOOGLEBATCH_REGION=us-central1
 snakemake --jobs 1 --executor googlebatch --googlebatch-project myproject --googlebatch-region us-central1
 ```
 
+You can provide one or more custom arguments, as shown in the table below, to customize your batch run.
+Note that batch offers setup snippets to help with more complex setups (e.g,. MPI). See [batch snippets](#batch-snippets)
+for more information.
+
+
+### Logging
+
+For logging, we provide status updates in the Snakemake terminal you have running locally. For full logs, you can
+go to the [Google Cloud Batch interface](https://console.cloud.google.com/batch/jobs?project=llnl-flux) and click 
+on your job of interest, and then the "Logs" tab. If you don't see logs, look in the "Events" tab, as usually there
+is an error with your configuration (e.g., an unknown image or family).
+
+
 ### Arguments
 
 And custom arguments can be any of the following, either on the command line or provided in the environment.
@@ -62,11 +74,42 @@ And custom arguments can be any of the following, either on the command line or 
 | retry_count | Retry count (default to 1) | `--googlebatch-retry-count` | int | | False | 1 |
 | max_run_duration | Maximum run duration, string (e.g., 3600s) | `--googlebatch-max-run-duration` | str | | False | "3600s" |
 | labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) |`--googlebatch-labels` | str | | False | unset|
-| container | Container to use (only when image_family is batch-cos) | `--googlebatch-container` | str | | False | unset|
+| container | Container to use (only when image_family is batch-cos*) [see here](https://cloud.google.com/batch/docs/vm-os-environment-overview#supported_vm_os_images) for families/projects | `--googlebatch-container` | str | | False | unset|
 | keep_source_cache | Cache workflows in your Google Cloud Storage Bucket | `--googlebatch-keep-source-cache` | bool | | False | False |
+| snippet | A comma separated list of one or more snippets to add to your setup | `--googelbatch-snippets` | str | | False | unset |
 
 For machine type, note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
 Also note that you can customize the machine type on the level of the step (see [Step Options](#step-options) below).
+
+#### Choosing an Image
+
+You can read about how to choose an image [here](https://cloud.google.com/batch/docs/view-os-images). Note that
+the image family and project must match or you'll see that your job does not run (but has an event that indicates a mismatch in the online table).
+Since this is a changing set we do not validate, however we suggest that you check before running to not waste time.
+I am not entirely sure how to choose correctly, because there is some information [here]() but this listing offers
+different information:
+
+```bash
+gcloud compute images list | grep cos
+```
+
+### Batch Snippets
+
+Batch, by way of running on virtual machines, can support custom more complex setups or running steps such as running MPI.
+However, the setups here are non trivial, so if you choose, a custom snippet can be added. There are
+two types of snippets:
+
+ - named, built-in snippets provided by the googlebatch executor plugin here
+ - your custom snippet provided via a script file (not implemented yet)
+
+For each named snippet, depending on the functionality it might add custom logic to the setup or final runnable step.
+Examples for providing both are shown below. To determine if the snippet is custom, it should be a json or yaml file that
+exists. The order that you provide any number of snippets is the order they
+are added. To provide more than one, provide them via a comma separated list.
+
+```bash
+$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur --googlebatch-snippets intel-mpi
+```
 
 ### Additional Environment Variables
 
@@ -253,7 +296,7 @@ rule hello_world:
 
 #### googlebatch_container
 
-A container to use only with `image_family` set to batch-cos
+A container to use only with `image_family` set to batch-cos* (see [here](https://cloud.google.com/batch/docs/vm-os-environment-overview#supported_vm_os_images) for how to see VM choices)
 
 ```console
 rule hello_world:
@@ -265,18 +308,34 @@ rule hello_world:
         "..."
 ```
 
+#### googlebatch_snippets
+
+One or more named (or file-derived) snippets to add to setup.
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_snippets="mpi,myscript.sh"
+	shell:
+        "..."
+```
+
+
+###  TODO
+
+- Add bash strict mode (should default to true)
+
 
 ### Questions
 
 - What leads to STATE_UNSPECIFIED?
-- Should MPI barriers / install be integrated into wrappers or here?
-- For All (Google Gatch) How do we represent more than one runnable in a step?
+- For Google: what is the source of truth (listing) for batch? I see different answers in different places.
 - For Johannes: Why can't we use debug logging for executor plugins? I instead need to use info and make it very verbose.
 - For All: How do we want to use [COS](https://cloud.google.com/container-optimized-os/docs/concepts/features-and-benefits)? It would allow a container base to be used instead I think?
-- For Google: How do we get the same log for the final job (e.g., to show to the user?) [I don't see it here](https://github.com/googleapis/google-cloud-python/blob/8235ef62943bae4bb574c4d5555ce46db231c7d2/packages/google-cloud-batch/google/cloud/batch_v1/types/batch.py#L313-L340) (only status messages)
-- For Google: there should be a quick exit / fail if something in the script fails (it seems to keep going)
 
-## Notes
+### Notes
 
 - Conda is used to install Snakemake and dependencies.
 - The COS (container OS) uses the default Snakemake container, unless you specify differently.
@@ -288,78 +347,8 @@ rule hello_world:
 - The logs directly in batch are so much better! Having the stream option there would still be nice (vs. having to refresh.)
 - The batch UI (jobs table) is very slow to load and often just doesn't even after button or page refresh.
 
-### TODO
+For examples, look into the [examples](examples) directory.
 
-- look closely at logs, and see if there is an id so we can keep track of those we've shown in the aux info (and add to debug)
-
-### Tutorial
-
-For this tutorial, we will start in the Example directory.
-Note that `--googlebatch-bucket` is required as a bucket to put workflow cache assets under "cache" 
-If it does not exist it will be created.
-
-```bash
-$ cd ./example
-
-# This says "use the custom executor module named snakemake_executor_plugin_googlebatch"
-$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur
-```
-
-```console
-Building DAG of jobs...
-Using shell: /bin/bash
-Job stats:
-job                         count    min threads    max threads
-------------------------  -------  -------------  -------------
-all                             1              1              1
-multilingual_hello_world        2              1              1
-total                           3              1              1
-
-Select jobs to execute...
-
-[Fri Jun 16 19:24:22 2023]
-rule multilingual_hello_world:
-    output: hola/world.txt
-    jobid: 2
-    reason: Missing output files: hola/world.txt
-    wildcards: greeting=hola
-    resources: tmpdir=/tmp
-
-Job 2 has been submitted with flux jobid ƒcjn4t3R (log: .snakemake/flux_logs/multilingual_hello_world/greeting_hola.log).
-[Fri Jun 16 19:24:32 2023]
-Finished job 2.
-1 of 3 steps (33%) done
-Select jobs to execute...
-
-[Fri Jun 16 19:24:32 2023]
-rule multilingual_hello_world:
-    output: hello/world.txt
-    jobid: 1
-    reason: Missing output files: hello/world.txt
-    wildcards: greeting=hello
-    resources: tmpdir=/tmp
-
-Job 1 has been submitted with flux jobid ƒhAPLa79 (log: .snakemake/flux_logs/multilingual_hello_world/greeting_hello.log).
-[Fri Jun 16 19:24:42 2023]
-Finished job 1.
-2 of 3 steps (67%) done
-Select jobs to execute...
-
-[Fri Jun 16 19:24:42 2023]
-localrule all:
-    input: hello/world.txt, hola/world.txt
-    jobid: 0
-    reason: Input files updated by another job: hello/world.txt, hola/world.txt
-    resources: tmpdir=/tmp
-
-[Fri Jun 16 19:24:42 2023]
-Finished job 0.
-3 of 3 steps (100%) done
-Complete log: .snakemake/log/2023-06-16T192422.186675.snakemake.log
-```
-
-And that's it! Continue reading to learn more about plugin design, and how you can also design your own executor
-plugin for use or development (that doesn't need to be added to upstream snakemake).
 
 ## Developer
 
