@@ -9,6 +9,8 @@ rule all:
 
 # First real rule, this is using a wildcard called "greeting"
 rule multilingual_hello_world:
+	output:
+		"{greeting}/world.txt",
 	shell:
 		"""
 		mkdir -p "{wildcards.greeting}"

@@ -179,6 +179,15 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
+    snippets: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "One or more snippets to add to the Google Batch task setup",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
 
 # Required:
 # Common settings shared by various executors.

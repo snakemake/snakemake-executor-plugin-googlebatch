@@ -13,10 +13,11 @@ import os
 
 download_snippet = """
 # Download the current storage archive
-url=https://github.com/rse-ops/snakemake-executor-plugin-googlebatch/blob/main/script/downloader.py
+repo=raw.githubusercontent.com/rse-ops/snakemake-executor-plugin-googlebatch
+url=https://${repo}/main/script/downloader.py
 wget -O /download.py ${url}
 
-# Download <bucket name> <package>z
+# Download <bucket name> <package>
 python /download.py download %s %s /tmp/workdir.tar.gz
 tar -xzvf /tmp/workdir.tar.gz
 """  # noqa
