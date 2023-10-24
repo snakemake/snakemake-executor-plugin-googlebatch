@@ -79,6 +79,12 @@ class GoogleBatchExecutor(RemoteExecutor):
             labels[key] = value
         return labels
 
+    def get_envvar_declarations(self):
+        """
+        This is just added as a workaround while there is a bug with real.py
+        """
+        return {}
+
     def add_storage(self, job, task):
         """
         Add storage for a task, which requires a bucket and mount path.
@@ -148,6 +154,7 @@ class GoogleBatchExecutor(RemoteExecutor):
             snakefile=snakefile,
             snippets=snippets,
             settings=self.workflow.executor_settings,
+            resources=job.resources,
         )
 
     def run_job(self, job: JobExecutorInterface):

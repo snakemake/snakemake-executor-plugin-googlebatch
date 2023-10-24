@@ -193,6 +193,7 @@ class ExecutorSettings(ExecutorSettingsBase):
 # Common settings shared by various executors.
 common_settings = CommonSettings(
     pass_envvar_declarations_to_cmd=True,
-    non_local_exec=True,
-    implies_no_shared_fs=True,
+    # This will eventually need to be True
+    non_local_exec=False,
+    implies_no_shared_fs=False,
 )

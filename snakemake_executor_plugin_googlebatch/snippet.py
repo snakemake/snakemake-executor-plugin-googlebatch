@@ -1,57 +1,23 @@
 # Snippets to provide to the command writer
 
 from snakemake_interface_common.exceptions import WorkflowError
+import jinja2
 import os
 import re
 
-# For each snippet, we can optionally define:
-# - run script
-# - required executor settings for run script
-# - setup script
-# - required variables for setup script
-# - required families (if relevant) to validate
+# Registered (known) snippets to the plugin here
+#            family: regular expression to validate family (if applicable)
+#        setup/run: paths from here that contain Jinja2 templates
+# includes_command: boolean if the snippet renders the command
 
-mpi_paths = """
-export PATH=/opt/intel/mpi/latest/bin:$PATH
-MPI_LD_PATH=/opt/intel/mpi/latest/lib:/opt/intel/mpi/latest/lib/release
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${MPI_LD_PATH}
-"""
-
-mpi_run_script = (
-    mpi_paths
-    + """
-find /opt/intel -name mpicc
-
-# This is important - it won't work without sourcing
-source /opt/intel/mpi/latest/env/vars.sh
-
-if [ $BATCH_TASK_INDEX = 0 ]; then
-  ls
-  which mpirun
-  #                                      tasks         tasks per node      # command
-  mpirun -hostfile $BATCH_HOSTS_FILE -n %s -ppn %s %s
-fi
-"""
-)
-
-mpi_setup_script = (
-    """
-sleep $BATCH_TASK_INDEX
-
-# Note that for this family / image, we are root (do not need sudo)
-yum update -y && yum install -y cmake gcc tuned ethtool
-
-# This ONLY works on the hpc-* image family images
-google_mpi_tuning --nosmt
-# google_install_mpi --intel_mpi
-google_install_intelmpi --impi_2021
-source /opt/intel/mpi/latest/env/vars.sh
-
-# This is where they are installed to
-# ls /opt/intel/mpi/latest/
-"""
-    + mpi_paths
-)
+snippets = {
+    "intel-mpi": {
+        "family": "hpc",
+        "setup": "intel-mpi/setup.sh",
+        "run": "intel-mpi/run.sh",
+        "includes_command": True,
+    }
+}
 
 
 class SnippetGroup:
@@ -59,7 +25,7 @@ class SnippetGroup:
     One or more snippets to add to a setup.
     """
 
-    def __init__(self, spec, settings):
+    def __init__(self, spec, settings, resources):
         """
         Snippets must be valid at time of init.
         """
@@ -67,6 +33,7 @@ class SnippetGroup:
         self.has_run_command_snippet = False
         self.snippets = []
         self.settings = settings
+        self.resources = resources
         self.load(spec)
         self.parse()
 
@@ -76,7 +43,9 @@ class SnippetGroup:
         """
         render = ""
         for snippet in self.snippets:
-            render += snippet.render_setup(self.settings, command, container)
+            render += snippet.render_setup(
+                self.settings, self.resources, command, container
+            )
         return render
 
     def render_run(self, command, container):
@@ -85,7 +54,9 @@ class SnippetGroup:
         """
         render = ""
         for snippet in self.snippets:
-            render += snippet.render_run(self.settings, command, container)
+            render += snippet.render_run(
+                self.settings, self.resources, command, container
+            )
         return render
 
     def load(self, spec):
@@ -162,6 +133,33 @@ class BatchSnippet:
         """
         return self.spec.get("includes_command", False) or False
 
+    def render_run(self, settings, resources, command, container):
+        """
+        Render the run portion of the snippet
+        """
+        template = self.load_template("run")
+        return template.render({"resources": resources, "settings": settings})
+
+    def load_template(self, name):
+        """
+        Load a named template.
+
+        Each of setup and run is required to have "run" and "setup" fields defined.
+        """
+        tmpEnv = jinja2.Environment(
+            loader=jinja2.PackageLoader(
+                "snakemake_executor_plugin_googlebatch", "snippets"
+            )
+        )
+        return tmpEnv.get_template(self.spec[name])
+
+    def render_setup(self, settings, resources, command, container):
+        """
+        Render the setup portion of the snippet
+        """
+        template = self.load_template("setup")
+        return template.render({"resources": resources, "settings": settings})
+
     def load(self):
         """
         Load a named snippet.
@@ -178,15 +176,3 @@ class BatchSnippet:
         if os.path.exists(self.name):
             raise NotImplementedError("Snippets from file are not supported.")
         self.spec = snippets[self.name]
-
-
-snippets = {
-    "intel-mpi": {
-        # Regular expression to validate family
-        "family": "hpc",
-        "setup": mpi_setup_script,
-        "run": mpi_run_script,
-        # This will mpirun the snakemake command
-        "includes_command": True,
-    }
-}

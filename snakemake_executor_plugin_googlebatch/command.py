@@ -77,13 +77,20 @@ class CommandWriter:
     """
 
     def __init__(
-        self, command=None, container=None, snakefile=None, snippets=None, settings=None
+        self,
+        command=None,
+        container=None,
+        snakefile=None,
+        snippets=None,
+        settings=None,
+        resources=None,
     ):
         self.command = command
         self.container = container
 
         # This is the contents of the snakefile and not the path
         self.snakefile = snakefile
+        self.resources = resources
         self.settings = settings
 
         # Prepare (and validate) any provided snippets for the job
@@ -96,7 +103,7 @@ class CommandWriter:
         We also validate here (early on) to exit early if needed
         """
         # Settings are important to provide as they have params
-        self.snippets = sniputil.SnippetGroup(spec, self.settings)
+        self.snippets = sniputil.SnippetGroup(spec, self.settings, self.resources)
         self.snippets.validate()
 
     def run(self, pre_commands=None):

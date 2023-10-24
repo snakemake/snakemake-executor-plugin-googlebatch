@@ -326,7 +326,7 @@ rule hello_world:
 ###  TODO
 
 - Add bash strict mode (should default to true)
-
+- Integrate snakemake MPI support (needs to work with snippet)
 
 ### Questions
 
