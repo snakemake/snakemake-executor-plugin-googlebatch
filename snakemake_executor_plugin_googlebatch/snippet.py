@@ -44,7 +44,10 @@ class SnippetGroup:
         render = ""
         for snippet in self.snippets:
             render += snippet.render_setup(
-                self.settings, self.resources, command, container
+                settings=self.settings,
+                resources=self.resources,
+                command=command,
+                container=container,
             )
         return render
 
@@ -55,7 +58,10 @@ class SnippetGroup:
         render = ""
         for snippet in self.snippets:
             render += snippet.render_run(
-                self.settings, self.resources, command, container
+                settings=self.settings,
+                resources=self.resources,
+                command=command,
+                container=container,
             )
         return render
 
@@ -133,12 +139,12 @@ class BatchSnippet:
         """
         return self.spec.get("includes_command", False) or False
 
-    def render_run(self, settings, resources, command, container):
+    def render_run(self, **kwargs):
         """
         Render the run portion of the snippet
         """
         template = self.load_template("run")
-        return template.render({"resources": resources, "settings": settings})
+        return template.render(**kwargs)
 
     def load_template(self, name):
         """
@@ -153,12 +159,12 @@ class BatchSnippet:
         )
         return tmpEnv.get_template(self.spec[name])
 
-    def render_setup(self, settings, resources, command, container):
+    def render_setup(self, **kwargs):
         """
         Render the setup portion of the snippet
         """
         template = self.load_template("setup")
-        return template.render({"resources": resources, "settings": settings})
+        return template.render(**kwargs)
 
     def load(self):
         """
