@@ -4,9 +4,7 @@ import snakemake.common.tests
 import snakemake.settings
 from snakemake_executor_plugin_googlebatch import ExecutorSettings
 from snakemake_interface_executor_plugins.settings import ExecutorSettingsBase
-from snakemake_interface_storage_plugins.settings import StorageProviderSettingsBase
-
-BUCKET_NAME = "change-me"
+# from snakemake_interface_storage_plugins.settings import StorageProviderSettingsBase
 
 
 class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase):
@@ -16,11 +14,9 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
         return "googlebatch"
 
     def get_executor_settings(self) -> Optional[ExecutorSettingsBase]:
+
         # instatiate ExecutorSettings of this plugin as appropriate
-        return ExecutorSettings(
-            keep_source_cache=False, # TODO remove this: Snakemake handles source file upload and deployment automatically now!
-            bucket=BUCKET_NAME, # TODO I guess this can be removed as well, the executor does not need to know about any bucket
-        )
+        return ExecutorSettings()
 
     def get_assume_shared_fs(self):
         return False
@@ -31,6 +27,6 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
         return snakemake.settings.RemoteExecutionSettings(
             seconds_between_status_checks=10,
             envvars=self.get_envvars(),
-            # TODO remove once we have switched to stable snakemake for dev
+            # TODO: remove once we have switched to stable snakemake for dev
             container_image="snakemake/snakemake:latest",
         )
