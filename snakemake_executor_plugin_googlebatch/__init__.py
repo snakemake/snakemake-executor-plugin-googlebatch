@@ -191,9 +191,12 @@ class ExecutorSettings(ExecutorSettingsBase):
 
 # Required:
 # Common settings shared by various executors.
+# IMPORTANT: this is set to artifically be False / False
+# because the storage GS is not working / buggy
 common_settings = CommonSettings(
     pass_envvar_declarations_to_cmd=True,
-    # This will eventually need to be True
+    # non_local_exec=True,
+    # implies_no_shared_fs=True,
     non_local_exec=False,
     implies_no_shared_fs=False,
 )

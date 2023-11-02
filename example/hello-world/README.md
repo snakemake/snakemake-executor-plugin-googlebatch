@@ -5,7 +5,7 @@ If it does not exist it will be created.
 
 ```bash
 # This says "use the custom executor module named snakemake_executor_plugin_googlebatch"
-$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur
+$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur --googlebatch-region us-central1 --googlebatch-project llnl-flux --default-storage-provider gs --storage-gs-project llnl-flux
 ```
 
 ```console
