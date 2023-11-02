@@ -1,6 +1,7 @@
 from typing import Optional
 
 import snakemake.common.tests
+import snakemake.settings
 from snakemake_executor_plugin_googlebatch import ExecutorSettings
 from snakemake_interface_executor_plugins.settings import ExecutorSettingsBase
 from snakemake_interface_storage_plugins.settings import StorageProviderSettingsBase
@@ -8,28 +9,28 @@ from snakemake_interface_storage_plugins.settings import StorageProviderSettings
 BUCKET_NAME = "change-me"
 
 
-class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsBase):
+class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase):
     __test__ = True
 
     def get_executor(self) -> str:
         return "googlebatch"
 
-    def get_default_storage_provider_settings(self):
-        return StorageProviderSettingsBase()
-
     def get_executor_settings(self) -> Optional[ExecutorSettingsBase]:
         # instatiate ExecutorSettings of this plugin as appropriate
         return ExecutorSettings(
-            keep_source_cache=False,
-            bucket=BUCKET_NAME,
+            keep_source_cache=False, # TODO remove this: Snakemake handles source file upload and deployment automatically now!
+            bucket=BUCKET_NAME, # TODO I guess this can be removed as well, the executor does not need to know about any bucket
         )
 
-    def get_default_storage_provider(self) -> Optional[str]:
-        # Return name of default remote provider if required for testing,
-        # otherwise None.
-        return None
+    def get_assume_shared_fs(self):
+        return False
 
-    def get_default_storage_prefix(self) -> Optional[str]:
-        # Return default remote prefix if required for testing,
-        # otherwise None.
-        return BUCKET_NAME
+    def get_remote_execution_settings(
+        self,
+    ) -> snakemake.settings.RemoteExecutionSettings:
+        return snakemake.settings.RemoteExecutionSettings(
+            seconds_between_status_checks=10,
+            envvars=self.get_envvars(),
+            # TODO remove once we have switched to stable snakemake for dev
+            container_image="snakemake/snakemake:latest",
+        )
