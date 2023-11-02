@@ -4,6 +4,7 @@ import snakemake.common.tests
 import snakemake.settings
 from snakemake_executor_plugin_googlebatch import ExecutorSettings
 from snakemake_interface_executor_plugins.settings import ExecutorSettingsBase
+
 # from snakemake_interface_storage_plugins.settings import StorageProviderSettingsBase
 
 
@@ -14,7 +15,6 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
         return "googlebatch"
 
     def get_executor_settings(self) -> Optional[ExecutorSettingsBase]:
-
         # instatiate ExecutorSettings of this plugin as appropriate
         return ExecutorSettings()
 
