@@ -77,8 +77,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          # poetry run coverage run -m pytest tests/tests.py
-          poetry run pytest tests/tests.py || true
+          poetry run coverage run -m pytest tests/tests.py
 
-      #- name: Run Coverage
-      #  run: poetry run coverage report -m
+      - name: Run Coverage
+        run: poetry run coverage report -m
