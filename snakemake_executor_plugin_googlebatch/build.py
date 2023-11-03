@@ -23,6 +23,7 @@ tar -xzvf /tmp/workdir.tar.gz
 """  # noqa
 
 
+# TODO this can be removed entirely
 class BuildPackage:
     """
     A build package includes the local Snakemake directory

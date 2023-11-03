@@ -195,8 +195,10 @@ class ExecutorSettings(ExecutorSettingsBase):
 # because the storage GS is not working / buggy
 common_settings = CommonSettings(
     pass_envvar_declarations_to_cmd=True,
-    # non_local_exec=True,
-    # implies_no_shared_fs=True,
-    non_local_exec=False,
-    implies_no_shared_fs=False,
+    non_local_exec=True,
+    implies_no_shared_fs=True,
+    pass_default_storage_provider_args=True,
+    pass_default_resources_args=True,
+    pass_envvar_declarations_to_cmd=True,
+    auto_deploy_default_storage_provider=True,
 )

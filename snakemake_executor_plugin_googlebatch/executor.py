@@ -20,13 +20,7 @@ from google.cloud import batch_v1
 
 
 class GoogleBatchExecutor(RemoteExecutor):
-    def __init__(
-        self,
-        workflow: WorkflowExecutorInterface,
-        logger: LoggerExecutorInterface,
-    ):
-        super().__init__(workflow, logger)
-
+    def __post_init__(self):
         # Attach variables for easy access
         self.workdir = os.path.realpath(os.path.dirname(self.workflow.persistence.path))
 
@@ -34,6 +28,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         self.batch = batch_v1.BatchServiceClient()
 
         # We always generate a build source package to start
+        # TODO this has to be removed. Sources are now uploaded automatically by Snakemake.
         self._bp = BuildPackage(self.workflow, self.dag, self.logger)
         self._bp.generate_package()
         self._bp.upload()
