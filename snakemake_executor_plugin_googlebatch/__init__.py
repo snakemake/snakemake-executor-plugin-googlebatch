@@ -166,19 +166,6 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    keep_source_cache: Optional[bool] = field(
-        default=False,
-        metadata={
-            "help": "Keep the source cache of workflows in Google "
-            "by --default-remote-prefix/{source}/{cache}. Each workflow working "
-            "directory is compressed to a .tar.gz, named by the hash of the "
-            "contents, and kept in Google Cloud Storage. By default, the caches "
-            "are deleted at the shutdown step of the workflow.",
-            "env_var": False,
-            "required": False,
-        },
-    )
-
     snippets: Optional[str] = field(
         default=None,
         metadata={
@@ -197,8 +184,10 @@ common_settings = CommonSettings(
     pass_envvar_declarations_to_cmd=True,
     non_local_exec=True,
     implies_no_shared_fs=True,
+    job_deploy_sources=True,
     pass_default_storage_provider_args=True,
     pass_default_resources_args=True,
+    # TODO: we should rather pass envs to the container I guess
     pass_envvar_declarations_to_cmd=True,
     auto_deploy_default_storage_provider=True,
 )

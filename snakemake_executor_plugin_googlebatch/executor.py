@@ -4,18 +4,14 @@ import uuid
 from typing import List, Generator
 from snakemake_interface_executor_plugins.executors.base import SubmittedJobInfo
 from snakemake_interface_executor_plugins.executors.remote import RemoteExecutor
-from snakemake_interface_executor_plugins.workflow import WorkflowExecutorInterface
-from snakemake_interface_executor_plugins.logging import LoggerExecutorInterface
 from snakemake_interface_executor_plugins.jobs import (
     JobExecutorInterface,
 )
 from snakemake.common import get_container_image
 import snakemake_executor_plugin_googlebatch.utils as utils
 import snakemake_executor_plugin_googlebatch.command as cmdutil
-from snakemake_executor_plugin_googlebatch.build import BuildPackage
 
 from google.api_core.exceptions import DeadlineExceeded
-from google.api_core import retry
 from google.cloud import batch_v1
 
 
@@ -26,12 +22,6 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # There is an async client but I'm not sure we'd get much benefit
         self.batch = batch_v1.BatchServiceClient()
-
-        # We always generate a build source package to start
-        # TODO this has to be removed. Sources are now uploaded automatically by Snakemake.
-        self._bp = BuildPackage(self.workflow, self.dag, self.logger)
-        self._bp.generate_package()
-        self._bp.upload()
 
     def get_param(self, job, param):
         """
@@ -175,8 +165,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         self.logger.info("\n🌟️ Setup Command:")
         print(setup_command)
 
-        # Precommands include download the build archive
-        pre_commands = [self._bp.download_snippet]
+        pre_commands = []
 
         # Run command
         run_command = writer.run(pre_commands)
@@ -393,17 +382,6 @@ class GoogleBatchExecutor(RemoteExecutor):
         Shutdown deletes build packages if the user didn't request to clean
         up the cache. At this point we've already cancelled running jobs.
         """
-        save_cache = self.workflow.executor_settings.keep_source_cache
-
-        @retry.Retry(predicate=utils.google_cloud_retry)
-        def clear_cache():
-            self._bp.clear()
-
-        # Delete build source packages only if user regooglquested no cache
-        if not save_cache:
-            self.logger.info("Requested to save workflow sources, skipping cleanup.")
-        else:
-            clear_cache()
 
         # Call parent shutdown
         super().shutdown()
