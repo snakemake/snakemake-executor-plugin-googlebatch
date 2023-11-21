@@ -43,7 +43,11 @@ if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
     rm -rf ./miniconda.sh
     conda config --system --set channel_priority strict
     which python
-    /opt/conda/bin/python --version
+    /opt/conda/bin/python --version    
+    url=https://github.com/snakemake/snakemake-storage-plugin-gs
+    git clone --depth 1 ${url} /tmp/snakemake-gs
+    cd /tmp/snakemake-gs
+    /opt/conda/bin/python -m pip install .
     url=https://github.com/snakemake/snakemake-interface-common
     git clone --depth 1 ${url} /tmp/snakemake-common
     cd /tmp/snakemake-common

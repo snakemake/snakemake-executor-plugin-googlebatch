@@ -3,10 +3,17 @@
 Note that `--googlebatch-bucket` is required as a bucket to put workflow cache assets under "cache" 
 If it does not exist it will be created.
 
+This prefix we will delete later
+```bash
+prefix="s3://snakemake-test-googlebatch"
+```
+
 ```bash
 # This says "use the custom executor module named snakemake_executor_plugin_googlebatch"
-$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur --googlebatch-region us-central1 --googlebatch-project llnl-flux --default-storage-provider gs --storage-gs-project llnl-flux
+$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur --googlebatch-region us-central1 --googlebatch-project llnl-flux --default-storage-provider s3 --default-storage-prefix $prefix --storage-s3-endpoint-url https://play.minio.io:9000 --storage-s3-access-key Q3AM3UQ867SPQQA43P2F --storage-s3-secret-key zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG 
 ```
+
+
 
 ```console
 Building DAG of jobs...
