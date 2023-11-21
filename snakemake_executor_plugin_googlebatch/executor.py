@@ -2,6 +2,7 @@ import os
 import uuid
 
 from typing import List, Generator
+from snakemake_interface_common.exceptions import WorkflowError
 from snakemake_interface_executor_plugins.executors.base import SubmittedJobInfo
 from snakemake_interface_executor_plugins.executors.remote import RemoteExecutor
 from snakemake_interface_executor_plugins.jobs import (
@@ -21,7 +22,10 @@ class GoogleBatchExecutor(RemoteExecutor):
         self.workdir = os.path.realpath(os.path.dirname(self.workflow.persistence.path))
 
         # There is an async client but I'm not sure we'd get much benefit
-        self.batch = batch_v1.BatchServiceClient()
+        try:
+            self.batch = batch_v1.BatchServiceClient()
+        except Exception as e:
+            raise WorkflowError("Unable to connect to Google Batch.", e)
 
     def get_param(self, job, param):
         """

@@ -14,7 +14,11 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
 
     def get_executor_settings(self) -> Optional[ExecutorSettingsBase]:
         # instatiate ExecutorSettings of this plugin as appropriate
-        return ExecutorSettings()
+        return ExecutorSettings(
+            project="snakemake-testing-googlebatch",
+            region="us-central1",
+            
+        )
 
     def get_assume_shared_fs(self):
         return False

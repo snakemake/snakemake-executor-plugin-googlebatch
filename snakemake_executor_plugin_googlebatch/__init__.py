@@ -85,15 +85,6 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    bucket: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "A bucket to mount with snakemake data",
-            "env_var": True,
-            "required": True,
-        },
-    )
-
     work_tasks: Optional[str] = field(
         default=1,
         metadata={
