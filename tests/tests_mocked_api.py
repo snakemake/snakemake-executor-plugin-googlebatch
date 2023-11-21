@@ -1,12 +1,6 @@
-from typing import Optional
 from unittest.mock import patch
 
 from google.cloud.batch_v1.types import Job, JobStatus
-
-import snakemake.common.tests
-import snakemake.settings
-from snakemake_executor_plugin_googlebatch import ExecutorSettings
-from snakemake_interface_executor_plugins.settings import ExecutorSettingsBase
 
 from tests import TestWorkflowsBase
 

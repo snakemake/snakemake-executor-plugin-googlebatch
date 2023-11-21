@@ -1,5 +1,4 @@
 from typing import Optional
-from unittest.mock import patch
 
 import snakemake.common.tests
 import snakemake.settings
