@@ -181,13 +181,12 @@ class ExecutorSettings(ExecutorSettingsBase):
 # IMPORTANT: this is set to artifically be False / False
 # because the storage GS is not working / buggy
 common_settings = CommonSettings(
+    # TODO: we should rather pass envs to the container I guess
     pass_envvar_declarations_to_cmd=True,
     non_local_exec=True,
     implies_no_shared_fs=True,
     job_deploy_sources=True,
     pass_default_storage_provider_args=True,
     pass_default_resources_args=True,
-    # TODO: we should rather pass envs to the container I guess
-    pass_envvar_declarations_to_cmd=True,
     auto_deploy_default_storage_provider=True,
 )
