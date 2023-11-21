@@ -18,5 +18,5 @@ class TestWorkflowsMocked(TestWorkflowsBase):
         return_value=Job(status=JobStatus(state=JobStatus.State.SUCCEEDED)),
         autospec=True,
     )
-    def run_workflow(*args, **kwargs):
+    def run_workflow(self, *args, **kwargs):
         super().run_workflow(*args, **kwargs)
