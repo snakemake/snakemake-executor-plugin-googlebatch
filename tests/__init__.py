@@ -17,7 +17,6 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
         return ExecutorSettings(
             project="snakemake-testing-googlebatch",
             region="us-central1",
-            
         )
 
     def get_assume_shared_fs(self):
