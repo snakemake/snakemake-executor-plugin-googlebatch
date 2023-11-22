@@ -69,13 +69,23 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v1'
-        with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      - name: 'Set up GCloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
+      - name: Setup Gcloud
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@v0.2.1
+        if: env.GCP_AVAILABLE
+        with:
+          project_id: snakemake-testing
+          service_account_email: "${{ secrets.GCP_SA_EMAIL }}"
+          service_account_key: "${{ secrets.GCP_SA_KEY }}"
+          export_default_credentials: true
+
+      # - id: 'auth'
+      #   uses: 'google-github-actions/auth@v1'
+      #   with:
+      #     credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      # - name: 'Set up GCloud SDK'
+      #   uses: 'google-github-actions/setup-gcloud@v1'
 
       - name: Run pytest
         run: |
