@@ -72,7 +72,6 @@ jobs:
 
       - name: Setup Gcloud
         uses: GoogleCloudPlatform/github-actions/setup-gcloud@v0.2.1
-        if: env.GCP_AVAILABLE
         with:
           project_id: snakemake-testing
           service_account_email: "${{ secrets.GCP_SA_EMAIL }}"
