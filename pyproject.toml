@@ -15,9 +15,8 @@ google-cloud-batch = "^0.17.1"
 requests = "^2.31.0"
 google-api-core = "^2.12.0"
 google-cloud-storage = "^2.12.0"
-snakemake-interface-common = {git = "https://github.com/snakemake/snakemake-interface-common.git"}
-snakemake-interface-executor-plugins = {git = "https://github.com/snakemake/snakemake-interface-executor-plugins.git"}
-snakemake-interface_storage-plugins = {git = "https://github.com/snakemake/snakemake-interface-storage-plugins.git"}
+snakemake-interface-common = "^1.14.0"
+snakemake-interface-executor-plugins = "^8.0.2"
 jinja2 = "^3.1.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -25,8 +24,11 @@ black = "^23.9.1"
 flake8 = "^6.1.0"
 coverage = "^7.3.1"
 pytest = "^7.4.2"
-snakemake = {git = "https://github.com/snakemake/snakemake.git"}
-snakemake-storage-plugin-s3 = "^0.2.4"
+snakemake = {git = "https://github.com/snakemake/snakemake.git", branch="main"}
+snakemake-storage-plugin-s3 = "^0.2.5"
+
+[tool.coverage.run]
+omit = [".*", "*/site-packages/*", "Snakefile"]
 
 [build-system]
 requires = ["poetry-core"]
