@@ -15,7 +15,7 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
     def get_executor_settings(self) -> Optional[ExecutorSettingsBase]:
         # instatiate ExecutorSettings of this plugin as appropriate
         return ExecutorSettings(
-            project="snakemake-testing-googlebatch",
+            project="snakemake-testing",
             region="us-central1",
         )
 
