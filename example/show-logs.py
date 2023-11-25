@@ -26,7 +26,7 @@ def get_parser():
     )
     parser.add_argument(
         "--project",
-        help="Google Project (can also be provided with SNAKEMAKE_GOOGLEBATCH_PROJECT in environment",
+        help="Google Project (or SNAKEMAKE_GOOGLEBATCH_PROJECT in environment",
     )
     parser.add_argument(
         "--region",
