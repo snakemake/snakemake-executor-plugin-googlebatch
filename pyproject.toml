@@ -27,6 +27,9 @@ pytest = "^7.4.2"
 snakemake = {git = "https://github.com/snakemake/snakemake.git", branch="main"}
 snakemake-storage-plugin-s3 = "^0.2.5"
 
+[tool.coverage.run]
+omit = [".*", "*/site-packages/*", "Snakefile"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
