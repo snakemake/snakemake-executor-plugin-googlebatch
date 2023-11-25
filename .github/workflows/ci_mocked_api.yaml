@@ -1,4 +1,4 @@
-name: test-googlebatch
+name: test-googlebatch-mocked-api
 
 on:
   pull_request:
