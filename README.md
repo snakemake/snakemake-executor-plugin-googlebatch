@@ -48,11 +48,31 @@ for more information.
 
 ### Logging
 
-For logging, we provide status updates in the Snakemake terminal you have running locally. For full logs, you can
+For logging, for an interactive run from the command line we provide status updates in the console you have running locally. For full logs, you can
 go to the [Google Cloud Batch interface](https://console.cloud.google.com/batch/jobs?project=llnl-flux) and click 
 on your job of interest, and then the "Logs" tab. If you don't see logs, look in the "Events" tab, as usually there
 is an error with your configuration (e.g., an unknown image or family).
 
+#### Isolated Logs
+
+If you need to retrieve logs for a job outside of this context (e.g., after a run or in a Pythonic test) you can use the provided script in [example](example).
+Here is how to run it using the local poetry environment. You can either provide `--project` and `--region` or export the environment variables for them
+described above.
+
+```bash
+#                                       <jobid>
+poetry run python example/show-logs.py a-898674
+```
+
+Note that this is currently provided as a helper script because the [Google Cloud API limits](https://cloud.google.com/logging/quotas#api-limits)
+set a rate limit of 60/minute. 
+
+> Number of entries.list requests 60 per minute, per Google Cloud project
+
+For some perspective, a "hello world" job will produce over 3K lines of logs, and (without a sleep between calls)
+the ratelimit is hit very easily. We are currently assessing strategies to deliver full logs to .snakemake logging files
+without hitting issues with this rate limit. It looks possible to create "[sinks](https://cloud.google.com/logging/docs/routing/overview#sinks)" using
+Pub Sub, however this would be adding an extra API dependency (and cost). 
 
 ### Arguments
 
@@ -322,11 +342,11 @@ rule hello_world:
         "..."
 ```
 
-
 ###  TODO
 
 - Add bash strict mode (should default to true)
 - Integrate snakemake MPI support (needs to work with snippet)
+
 
 ### Questions
 

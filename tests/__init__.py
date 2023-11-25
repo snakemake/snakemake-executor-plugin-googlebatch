@@ -2,6 +2,7 @@ from typing import Optional
 
 import snakemake.common.tests
 import snakemake.settings
+import os
 from snakemake_executor_plugin_googlebatch import ExecutorSettings
 from snakemake_interface_executor_plugins.settings import ExecutorSettingsBase
 
@@ -13,10 +14,14 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
         return "googlebatch"
 
     def get_executor_settings(self) -> Optional[ExecutorSettingsBase]:
+        # Allow custom one-off project/region from the environment
+        project = os.environ.get('SNAKEMAKE_GOOGLEBATCH_PROJECT') or "snakemake-testing"
+        region = os.environ.get('SNAKEMAKE_GOOGLEBATCH_REGION') or "us-central1"
+        
         # instatiate ExecutorSettings of this plugin as appropriate
         return ExecutorSettings(
-            project="snakemake-testing",
-            region="us-central1",
+            project=project,
+            region=region,
         )
 
     def get_assume_shared_fs(self):
