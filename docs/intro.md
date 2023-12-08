@@ -1,0 +1,2 @@
+This is the [Google Batch](https://cloud.google.com/batch/docs/get-started) external executor plugin for snakemake.
+If you are migrating from Google Life Sciences see [this documentation](https://cloud.google.com/batch/docs/migrate-to-batch-from-cloud-life-sciences). For the underlying Python SDK, see [google-cloud-batch](https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-batch) on GitHub.
