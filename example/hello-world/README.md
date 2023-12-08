@@ -1,11 +1,11 @@
 # Hello World
 
-Note that `--googlebatch-bucket` is required as a bucket to put workflow cache assets under "cache" 
-If it does not exist it will be created.
+Here is an example specifying to use an s3 bucket. Batch doesn't have a shared filesystem, so we do need to specify this.
+Note that Google Storage (gs) is also an option.
 
 ```bash
 # This says "use the custom executor module named snakemake_executor_plugin_googlebatch"
-$ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache-dinosaur --googlebatch-region us-central1 --googlebatch-project llnl-flux --default-storage-provider gs --storage-gs-project llnl-flux
+$ snakemake --jobs 1 --executor googlebatch --googlebatch-region us-central1 --googlebatch-project llnl-flux --default-storage-provider s3 --default-storage-prefix s3://snakemake-testing-llnl
 ```
 
 ```console
