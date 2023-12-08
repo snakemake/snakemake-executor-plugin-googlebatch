@@ -183,7 +183,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         runnable = batch_v1.Runnable()
         runnable.script = batch_v1.Runnable.Script()
         runnable.script.text = run_command
-        
+
         # Note that secret variables seem to require some
         # extra secret API enabled
         runnable.environment.variables = envars
