@@ -5,7 +5,7 @@ from google.cloud.batch_v1.types import Job, JobStatus
 from tests import TestWorkflowsBase
 
 
-class TestWorkflowsMocked(TestWorkflowsBase):
+class TestWorkflowsMockedApi(TestWorkflowsBase):
     __test__ = True
 
     @patch(

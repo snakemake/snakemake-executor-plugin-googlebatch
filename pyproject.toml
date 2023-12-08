@@ -7,7 +7,10 @@ authors = [
     "Johannes Koester <johannes.koester@uni-due.de>"
 ]
 readme = "README.md"
-packages = [{include = "snakemake_executor_plugin_googlebatch"}]
+license = "MIT"
+repository = "https://github.com/snakemake/snakemake-executor-plugin-googlebatch"
+documentation = "https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/googlebatch.html"
+keywords = ["snakemake", "plugin", "executor", "cloud", "google-batch"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
