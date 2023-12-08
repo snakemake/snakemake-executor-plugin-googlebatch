@@ -176,10 +176,17 @@ class GoogleBatchExecutor(RemoteExecutor):
         self.logger.info("\n🐍️ Snakemake Command:")
         print(run_command)
 
+        # Add environment variables to the task
+        envars = self.workflow.spawned_job_args_factory.envvars()
+
         # A single runnable to execute snakemake
         runnable = batch_v1.Runnable()
         runnable.script = batch_v1.Runnable.Script()
         runnable.script.text = run_command
+        
+        # Note that secret variables seem to require some
+        # extra secret API enabled
+        runnable.environment.variables = envars
 
         # Snakemake setup must finish before snakemake is run
         setup = batch_v1.Runnable()
