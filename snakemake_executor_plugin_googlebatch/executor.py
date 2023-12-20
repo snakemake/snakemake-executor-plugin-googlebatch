@@ -8,7 +8,6 @@ from snakemake_interface_executor_plugins.executors.remote import RemoteExecutor
 from snakemake_interface_executor_plugins.jobs import (
     JobExecutorInterface,
 )
-from snakemake.common import get_container_image
 import snakemake_executor_plugin_googlebatch.utils as utils
 import snakemake_executor_plugin_googlebatch.command as cmdutil
 
@@ -111,26 +110,12 @@ class GoogleBatchExecutor(RemoteExecutor):
                 f"Job {job} has container without image_family batch-cos*."
             )
 
-    def get_container(self, job):
-        """
-        Get container intended for a job
-
-        We first use the googlebatch_container (--googlebatch-container) and then
-        fall back to remote execution settings and then snakemake default.
-        """
-        return (
-            job.resources.get("container")
-            or self.executor_settings.container
-            or self.workflow.remote_execution_settings.container_image
-            or get_container_image()
-        )
-
     def get_command_writer(self, job):
         """
         Get a command writer for a job.
         """
         family = self.get_param(job, "image_family")
-        container = self.get_container(job)
+        container = self.workflow.remote_execution_settings.container_image
         command = self.format_job_exec(job)
         snakefile = self.read_snakefile()
 

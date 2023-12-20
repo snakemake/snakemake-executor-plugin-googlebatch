@@ -67,15 +67,6 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    container: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "A snakemake container for batch-cos image family.",
-            "env_var": False,
-            "required": False,
-        },
-    )
-
     image_project: Optional[str] = field(
         default="cloud-hpc-image-public",
         metadata={
