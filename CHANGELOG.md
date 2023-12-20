@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.1.0...v0.1.1) (2023-12-20)
+
+
+### Bug Fixes
+
+* remove superfluous container image settings ([0390deb](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/0390deb3a1995587dab611629ffedac716b87566))
+
 ## 0.1.0 (2023-12-08)
 
 
