@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.1.1...v0.2.0) (2024-01-02)
+
+
+### Features
+
+* add/intel mpi example ([#20](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/20)) ([673ad34](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/673ad345fb6590696dc3bb3d88c6873abde068ef))
+
 ## [0.1.1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.1.0...v0.1.1) (2023-12-20)
 
 
