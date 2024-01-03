@@ -25,6 +25,7 @@ class GoogleBatchExecutor(RemoteExecutor):
             self.batch = batch_v1.BatchServiceClient()
         except Exception as e:
             raise WorkflowError("Unable to connect to Google Batch.", e)
+        self._set_preemptible_rules()
 
     def get_param(self, job, param):
         """
@@ -110,6 +111,47 @@ class GoogleBatchExecutor(RemoteExecutor):
                 f"Job {job} has container without image_family batch-cos*."
             )
 
+    def _set_preemptible_rules(self):
+        """
+        Define a lookup dictionary for preemptible instance retries.
+        """
+        self.preemptible_rules = {}
+
+        # If a default is defined, we apply it to all the rules
+        if self.executor_settings.preemption_default is not None:
+            self.preemptible_rules = {
+                rule.name: self.executor_settings.preemption_default
+                for rule in self.workflow.rules
+            }
+
+        # Now update custom set rules
+        if self.executor_settings.preemption_rules is not None:
+            for rule in self.executor_settings.preemption_rules:
+                rule_name, restart_times = rule.strip().split("=")
+                self.preemption_rules[rule_name] = int(restart_times)
+
+        # Ensure we set the number of restart times for each rule
+        for rule_name, restart_times in self.preemptible_rules.items():
+            rule = self.workflow.get_rule(rule_name)
+            rule.restart_times = restart_times
+
+    def is_preemptible(self, job):
+        """
+        Determine if a job is preemptible.
+        """
+        if job.is_group():
+            preemptible = all(rule in self.preemptible_rules for rule in job.rules)
+            if not preemptible and any(
+                rule in self.preemptible_rules for rule in job.rules
+            ):
+                raise WorkflowError(
+                    "All grouped rules should be homogenously set as preemptible rules"
+                    "(see Defining groups for execution in snakemake documentation)"
+                )
+        else:
+            preemptible = job.rule.name in self.preemptible_rules
+        return preemptible
+
     def get_command_writer(self, job):
         """
         Get a command writer for a job.
@@ -177,6 +219,9 @@ class GoogleBatchExecutor(RemoteExecutor):
         setup = batch_v1.Runnable()
         setup.script = batch_v1.Runnable.Script()
         setup.script.text = setup_command
+
+        # Placement policy
+        # https://cloud.google.com/python/docs/reference/batch/latest/google.cloud.batch_v1.types.AllocationPolicy.PlacementPolicy
 
         # This will ensure all nodes finish first
         barrier = batch_v1.Runnable()
@@ -261,6 +306,12 @@ class GoogleBatchExecutor(RemoteExecutor):
         policy = batch_v1.AllocationPolicy.InstancePolicy()
         policy.machine_type = machine_type
         policy.boot_disk = boot_disk
+
+        # Do we want preemptible?
+        # https://github.com/googleapis/googleapis/blob/master/google/cloud/batch/v1/job.proto#L479 and  # noqa
+        # https://github.com/googleapis/google-cloud-python/blob/main/packages/google-cloud-batch/google/cloud/batch_v1/types/job.py#L672  # noqa
+        if self.is_preemptible(job):
+            policy.provisioning_model = 3
 
         instances = batch_v1.AllocationPolicy.InstancePolicyOrTemplate()
         instances.policy = policy

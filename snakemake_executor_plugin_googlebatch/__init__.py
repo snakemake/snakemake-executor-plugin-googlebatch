@@ -82,7 +82,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    work_tasks: Optional[str] = field(
+    work_tasks: Optional[int] = field(
         default=1,
         metadata={
             "help": "The default number of work tasks (these are NOT MPI ranks)",
@@ -91,7 +91,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    cpu_milli: Optional[str] = field(
+    cpu_milli: Optional[int] = field(
         default=1000,
         metadata={
             "help": "Milliseconds per cpu-second",
@@ -100,7 +100,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    cpu_milli: Optional[str] = field(
+    cpu_milli: Optional[int] = field(
         default=1000,
         metadata={
             "help": "Milliseconds per cpu-second",
@@ -109,7 +109,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    work_tasks_per_node: Optional[str] = field(
+    work_tasks_per_node: Optional[int] = field(
         default=1,
         metadata={
             "help": "The default number of work tasks per node (NOT MPI ranks)",
@@ -118,7 +118,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    memory: Optional[str] = field(
+    memory: Optional[int] = field(
         default=1000,
         metadata={
             "help": "Memory in MiB",
@@ -136,7 +136,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    retry_count: Optional[str] = field(
+    retry_count: Optional[int] = field(
         default=1,
         metadata={
             "help": "Retry count (default to 1)",
@@ -158,6 +158,26 @@ class ExecutorSettings(ExecutorSettingsBase):
         default=None,
         metadata={
             "help": "One or more snippets to add to the Google Batch task setup",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    # Preemptible (also sometimes called spot) options
+    # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#preemptible-jobs
+    preemption_default: Optional[int] = field(
+        default=None,
+        metadata={
+            "help": "Set a default number of preemptible instance retries",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    preemption_rules: Optional[list] = field(
+        default=None,
+        metadata={
+            "help": "Define custom preemptible instance retries for specific rules",
             "env_var": False,
             "required": False,
         },

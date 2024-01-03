@@ -88,6 +88,10 @@ And custom arguments can be any of the following, either on the command line or 
 | container | Container to use (only when image_family is batch-cos*) [see here](https://cloud.google.com/batch/docs/vm-os-environment-overview#supported_vm_os_images) for families/projects | `--googlebatch-container` | str | | False | unset|
 | keep_source_cache | Cache workflows in your Google Cloud Storage Bucket | `--googlebatch-keep-source-cache` | bool | | False | False |
 | snippet | A comma separated list of one or more snippets to add to your setup | `--googelbatch-snippets` | str | | False | unset |
+| preemption-default | Set a default number of preemptible instance retries | `--preemptible-default` | int | False | unset | 
+nset |
+| preemption-rules | Define custom preemptible instance retries for specific rules | `--preemption-rules` | list | False | unset | 
+
 
 For machine type, note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
 Also note that you can customize the machine type on the level of the step (see [Step Options](#step-options) below).
