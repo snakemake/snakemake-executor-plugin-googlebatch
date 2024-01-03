@@ -230,31 +230,6 @@ class GoogleBatchExecutor(RemoteExecutor):
             SubmittedJobInfo(job, external_jobid=createdjob.name, aux=aux)
         )
 
-    # TODO need to think about how a more complex startup script will work
-    # This would go after the variable specification
-    # Prepare the script templates
-    #    run_template = jinja2.Template(run_script)
-    #    runscript = run_template.render(
-    #        {
-    #            "tasks": tasks,
-    #            "tasks_per_node": tasks_per_node,
-    #            "outdir": outdir,
-    #        }
-    #    )
-
-    #    setup_template = jinja2.Template(setup_script)
-    #    script = setup_template.render({"outdir": outdir})
-
-    # Write over same file here, yes bad practice and lazy
-    #    template_and_write("setup.sh", script, bucket_name, "hello-world-mpi/setup.sh")
-    #    template_and_write("run.sh", runscript, bucket_name, "hello-world-mpi/run.sh")
-    #    upload_to_bucket("hello-world-mpi/Makefile", "Makefile", bucket_name)
-
-    # TODO need to think about how we want to separate some setup section (and barrier)
-
-    #    # Define what will be done as part of the job.
-    #    task = batch_v1.TaskSpec()
-
     def project_parent(self, job):
         """
         The job's parent is the region in which the job will run.
