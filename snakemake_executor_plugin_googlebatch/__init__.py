@@ -6,6 +6,9 @@ from snakemake_interface_executor_plugins.settings import (
     ExecutorSettingsBase,
 )
 from .executor import GoogleBatchExecutor as Executor  # noqa
+import urllib3
+
+urllib3.disable_warnings()
 
 
 # Optional:
@@ -58,6 +61,8 @@ class ExecutorSettings(ExecutorSettingsBase):
     )
 
     # This could also be batch-centos, batch-debian, batch-cos
+    # For COS, family is batch-<os>-<version>-official, e.g.,
+    # batch-debian-11-official
     image_family: Optional[str] = field(
         default="hpc-centos-7",
         metadata={
@@ -67,6 +72,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
+    # for cos, should be batch-custom-image
     image_project: Optional[str] = field(
         default="cloud-hpc-image-public",
         metadata={
