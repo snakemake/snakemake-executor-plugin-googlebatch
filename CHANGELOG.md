@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.2.0...v0.3.0) (2024-01-03)
+
+
+### Features
+
+* add simple example with cos ([#22](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/22)) ([2951454](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/2951454defef65a24396a16f7b9c4103e4156571))
+
 ## [0.2.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.1.1...v0.2.0) (2024-01-02)
 
 
