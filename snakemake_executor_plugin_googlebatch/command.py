@@ -62,7 +62,7 @@ fi
 check_for_snakemake = (
     snakemake_base_environment
     + """
-$(pwd)
+echo $(pwd)
 ls
 which snakemake || whereis snakemake
 """
