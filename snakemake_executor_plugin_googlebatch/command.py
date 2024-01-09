@@ -35,8 +35,9 @@ install_snakemake = """
 echo "I am batch index ${BATCH_TASK_INDEX}"
 export PATH=/opt/conda/bin:${PATH}
 
-# TODO update to be from snakemake googlebatch repository
-wget https://gist.githubusercontent.com/vsoch/60838b0b0fc848ca812e21f7d37ebac9/raw/621570759e7b851e7f8a9c6cb9c4889d898ae31e/install-snek.sh
+repo=https://github.com/snakemake/snakemake-executor-plugin-googlebatch
+path=blob/add-preemtible/snakemake_executor_plugin_googlebatch/scripts/install-shek.sh
+wget ${repo}/${path}
 chmod +x ./install-snek.sh
 
 if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
@@ -55,7 +56,7 @@ if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
   ./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-s3
   ./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-gcs
   ./install-snek.sh https://github.com/snakemake/snakemake
-  cd ${workdir}  
+  cd ${workdir}
 fi
 """
 
