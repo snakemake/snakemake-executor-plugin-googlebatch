@@ -34,28 +34,28 @@ install_snakemake = """
 # Only the main job should install conda (rest can use it)
 echo "I am batch index ${BATCH_TASK_INDEX}"
 export PATH=/opt/conda/bin:${PATH}
+
+# TODO update to be from snakemake googlebatch repository
+wget https://gist.githubusercontent.com/vsoch/60838b0b0fc848ca812e21f7d37ebac9/raw/621570759e7b851e7f8a9c6cb9c4889d898ae31e/install-snek.sh
+chmod +x ./install-snek.sh
+
 if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
-    workdir=$(pwd)
-    url=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    wget ${url} -O ./miniconda.sh
-    chmod +x ./miniconda.sh
-    bash ./miniconda.sh -b -u -p /opt/conda
-    rm -rf ./miniconda.sh
-    conda config --system --set channel_priority strict
-    which python
-    /opt/conda/bin/python --version
-    url=https://github.com/snakemake/snakemake-interface-common
-    git clone --depth 1 ${url} /tmp/snakemake-common
-    cd /tmp/snakemake-common
-    /opt/conda/bin/python -m pip install .
-    url=https://github.com/snakemake/snakemake-interface-executor-plugins
-    git clone --depth 1 ${url} /tmp/snakemake-plugin
-    cd /tmp/snakemake-plugin
-    /opt/conda/bin/python -m pip install .
-    git clone --depth 1 https://github.com/snakemake/snakemake /tmp/snakemake
-    cd /tmp/snakemake
-    /opt/conda/bin/python -m pip install .
-    cd ${workdir}
+  workdir=$(pwd)
+  url=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  wget ${url} -O ./miniconda.sh
+  chmod +x ./miniconda.sh
+  bash ./miniconda.sh -b -u -p /opt/conda
+  rm -rf ./miniconda.sh
+  conda config --system --set channel_priority strict
+  which python
+  /opt/conda/bin/python --version
+  ./install-snek.sh https://github.com/snakemake/snakemake-interface-common
+  ./install-snek.sh https://github.com/snakemake/snakemake-interface-executor-plugins
+  ./install-snek.sh https://github.com/snakemake/snakemake-interface-storage-plugins
+  ./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-s3
+  ./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-gcs
+  ./install-snek.sh https://github.com/snakemake/snakemake
+  cd ${workdir}  
 fi
 """
 
