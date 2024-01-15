@@ -163,26 +163,6 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    # Preemptible (also sometimes called spot) options
-    # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#preemptible-jobs
-    preemption_default: Optional[int] = field(
-        default=None,
-        metadata={
-            "help": "Set a default number of preemptible instance retries",
-            "env_var": False,
-            "required": False,
-        },
-    )
-
-    preemption_rules: Optional[list] = field(
-        default=None,
-        metadata={
-            "help": "Define custom preemptible instance retries for specific rules",
-            "env_var": False,
-            "required": False,
-        },
-    )
-
 
 # Required:
 # Common settings shared by various executors.
