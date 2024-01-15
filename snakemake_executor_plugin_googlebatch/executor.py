@@ -113,17 +113,12 @@ class GoogleBatchExecutor(RemoteExecutor):
     def is_preemptible(self, job):
         """
         Determine if a job is preemptible.
+
+        The logic for determining if the set is valid should belong upstream.
         """
         is_p = self.workflow.remote_execution_settings.preemptible_rules.is_preemptible
         if job.is_group():
             preemptible = all(is_p(rule) for rule in job.rules)
-            if not preemptible and any(
-                rule in self.preemptible_rules for rule in job.rules
-            ):
-                raise WorkflowError(
-                    "All grouped rules should be homogenously set as preemptible rules"
-                    "(see Defining groups for execution in snakemake documentation)"
-                )
         else:
             preemptible = is_p(job.rule.name)
         return preemptible
