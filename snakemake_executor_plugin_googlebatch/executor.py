@@ -116,7 +116,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         """
         is_p = self.workflow.remote_execution_settings.preemptible_rules.is_preemptible
         if job.is_group():
-            preemptible = all(is_p(rule.name) for rule in job.rules)
+            preemptible = all(is_p(rule) for rule in job.rules)
             if not preemptible and any(
                 rule in self.preemptible_rules for rule in job.rules
             ):
