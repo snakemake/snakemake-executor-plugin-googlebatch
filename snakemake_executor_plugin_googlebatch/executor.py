@@ -226,7 +226,6 @@ class GoogleBatchExecutor(RemoteExecutor):
         if self.is_preemptible(job) and retries:
             self.logger.debug(f"Updating preemptible retries to {retries}")
             task.max_retry_count = retries
-        self.workflow.remote_execution_settings.preemptible_retries
 
         batchjob = batch_v1.Job()
         batchjob.task_groups = [group]
