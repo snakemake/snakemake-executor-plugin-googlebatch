@@ -110,6 +110,19 @@ class GoogleBatchExecutor(RemoteExecutor):
                 f"Job {job} has container without image_family batch-cos*."
             )
 
+    def is_preemptible(self, job):
+        """
+        Determine if a job is preemptible.
+
+        The logic for determining if the set is valid should belong upstream.
+        """
+        is_p = self.workflow.remote_execution_settings.preemptible_rules.is_preemptible
+        if job.is_group():
+            preemptible = all(is_p(rule) for rule in job.rules)
+        else:
+            preemptible = is_p(job.rule.name)
+        return preemptible
+
     def get_command_writer(self, job):
         """
         Get a command writer for a job.
@@ -178,6 +191,9 @@ class GoogleBatchExecutor(RemoteExecutor):
         setup.script = batch_v1.Runnable.Script()
         setup.script.text = setup_command
 
+        # Placement policy
+        # https://cloud.google.com/python/docs/reference/batch/latest/google.cloud.batch_v1.types.AllocationPolicy.PlacementPolicy
+
         # This will ensure all nodes finish first
         barrier = batch_v1.Runnable()
         barrier.barrier = batch_v1.Runnable.Barrier()
@@ -202,7 +218,14 @@ class GoogleBatchExecutor(RemoteExecutor):
         group.permissive_ssh = True
 
         # This includes instances (machine type) boot disk and policy
+        # Also preemtion
         policy = self.get_allocation_policy(job)
+
+        # If we have preemption for the job and retry, update task retries with it
+        retries = self.workflow.remote_execution_settings.preemptible_retries
+        if self.is_preemptible(job) and retries:
+            self.logger.debug(f"Updating preemptible retries to {retries}")
+            task.max_retry_count = retries
 
         batchjob = batch_v1.Job()
         batchjob.task_groups = [group]
@@ -261,6 +284,12 @@ class GoogleBatchExecutor(RemoteExecutor):
         policy = batch_v1.AllocationPolicy.InstancePolicy()
         policy.machine_type = machine_type
         policy.boot_disk = boot_disk
+
+        # Do we want preemptible?
+        # https://github.com/googleapis/googleapis/blob/master/google/cloud/batch/v1/job.proto#L479 and  # noqa
+        # https://github.com/googleapis/google-cloud-python/blob/main/packages/google-cloud-batch/google/cloud/batch_v1/types/job.py#L672  # noqa
+        if self.is_preemptible(job):
+            policy.provisioning_model = 3
 
         instances = batch_v1.AllocationPolicy.InstancePolicyOrTemplate()
         instances.policy = policy

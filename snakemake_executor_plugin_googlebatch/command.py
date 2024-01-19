@@ -31,38 +31,31 @@ sudo apt-get install -y wget bzip2 ca-certificates gnupg2 squashfs-tools git
 )
 
 install_snakemake = """
-# Only the main job should install conda (rest can use it)
 echo "I am batch index ${BATCH_TASK_INDEX}"
 export PATH=/opt/conda/bin:${PATH}
-if [ $BATCH_TASK_INDEX = 0 ] && [ ! -d "/opt/conda" ] ; then
-    workdir=$(pwd)
-    url=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    wget ${url} -O ./miniconda.sh
-    chmod +x ./miniconda.sh
-    bash ./miniconda.sh -b -u -p /opt/conda
-    rm -rf ./miniconda.sh
-    conda config --system --set channel_priority strict
-    which python
-    /opt/conda/bin/python --version
-    url=https://github.com/snakemake/snakemake-interface-common
-    git clone --depth 1 ${url} /tmp/snakemake-common
-    cd /tmp/snakemake-common
-    /opt/conda/bin/python -m pip install .
-    url=https://github.com/snakemake/snakemake-interface-executor-plugins
-    git clone --depth 1 ${url} /tmp/snakemake-plugin
-    cd /tmp/snakemake-plugin
-    /opt/conda/bin/python -m pip install .
-    git clone --depth 1 https://github.com/snakemake/snakemake /tmp/snakemake
-    cd /tmp/snakemake
-    /opt/conda/bin/python -m pip install .
-    cd ${workdir}
-fi
+repo=https://raw.githubusercontent.com/snakemake/snakemake-executor-plugin-googlebatch
+path=add-preemtible/scripts/install-snek.sh
+wget ${repo}/${path}
+chmod +x ./install-snek.sh
+workdir=$(pwd)
+url=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+wget ${url} -O ./miniconda.sh
+chmod +x ./miniconda.sh
+bash ./miniconda.sh -b -u -p /opt/conda
+rm -rf ./miniconda.sh
+
+which python
+/opt/conda/bin/python --version
+./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-gcs
+./install-snek.sh https://github.com/snakemake/snakemake
+
+cd ${workdir}
 """
 
 check_for_snakemake = (
     snakemake_base_environment
     + """
-$(pwd)
+echo $(pwd)
 ls
 which snakemake || whereis snakemake
 """
