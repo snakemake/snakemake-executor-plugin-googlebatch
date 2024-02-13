@@ -34,7 +34,7 @@ install_snakemake = """
 echo "I am batch index ${BATCH_TASK_INDEX}"
 export PATH=/opt/conda/bin:${PATH}
 repo=https://raw.githubusercontent.com/snakemake/snakemake-executor-plugin-googlebatch
-path=add-preemtible/scripts/install-snek.sh
+path=main/scripts/install-snek.sh
 wget ${repo}/${path}
 chmod +x ./install-snek.sh
 workdir=$(pwd)

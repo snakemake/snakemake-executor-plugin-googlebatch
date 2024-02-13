@@ -292,9 +292,47 @@ class GoogleBatchExecutor(RemoteExecutor):
             policy.provisioning_model = 3
 
         instances = batch_v1.AllocationPolicy.InstancePolicyOrTemplate()
+
+        # Are we requesting GPU / accelerators?
+        accelerators = self.get_accelerators(job)
+        if accelerators:
+            instances.install_gpu_drivers = True
+            policy.accelerators = accelerators
+
         instances.policy = policy
         allocation_policy.instances = [instances]
         return allocation_policy
+
+    def get_accelerators(self, job):
+        """
+        Given a job request, add accelerators (count and type) to it.
+        """
+        gpu = job.resources.get("nvidia_gpu")
+        accelerators = []
+
+        # https://cloud.google.com/compute/docs/gpus#introduction
+        if gpu is not None:
+            # Case 1: it's a number
+            gpu_count = 1
+            try:
+                gpu_count = int(gpu)
+                gpu = None
+            except ValueError:
+                pass
+
+            # Add the gpu. Thi assumes just one type, for a certain count
+            accelerator = batch_v1.AllocationPolicy.Accelerator()
+            accelerator.count = gpu_count
+
+            # This is always required
+            if gpu is None:
+                gpu = "nvidia-tesla-t4"
+            accelerator.type_ = gpu
+
+            # This could eventually support adding to the list
+            # but currently does not
+            accelerators.append(accelerator)
+        return accelerators
 
     def read_snakefile(self):
         """

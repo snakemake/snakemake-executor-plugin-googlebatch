@@ -128,6 +128,12 @@ The following environment variables are available within any Google batch run:
 
  - `BATCH_TASK_INDEX`: The index of the workflow step (Google Batch calls a "task")
 
+### GPU
+
+The Google Batch executor uses the same designation for GPUs as core Snakemake. However, you should 
+[keep compatibility of machine type](https://cloud.google.com/compute/docs/gpus) with the GPU
+that you selected in mind. For example, if you select `gpu_nvidia=1` you will need an n1-* family machine type.
+
 ### Step Options
 
 The following options are allowed for batch steps. This predominantly includes most arguments.
