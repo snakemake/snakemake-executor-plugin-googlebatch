@@ -110,6 +110,24 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
+    network: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "The URL of an existing network resource",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    subnetwork: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "The URL of an existing subnetwork resource",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
     # local SSD uses type "local-ssd".
     # Also "pd-balanced", "pd-extreme", "pd-ssd", "pd-standard"
     boot_disk_type: Optional[str] = field(

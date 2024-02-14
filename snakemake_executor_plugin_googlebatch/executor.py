@@ -306,16 +306,39 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         instances.policy = policy
         allocation_policy.instances = [instances]
+
+        # Add custom network interfaces
+        network_policy = self.get_network_policy(job)
+        if network_policy is not None:
+            allocation_policy.network = network_policy
         return allocation_policy
+
+    def get_network_policy(self, job):
+        """
+        Given a job request, get the network policy
+        """
+        network = self.get_param(job, "network")
+        subnetwork = self.get_param(job, "subnetwork")
+        if all(x is None for x in [network, subnetwork]):
+            return
+
+        policy = batch_v1.AllocationPolicy.NetworkPolicy()
+        interface = batch_v1.AllocationPolicy.NetworkInterface()
+        if network is not None:
+            interface.network = network
+        if subnetwork is not None:
+            interface.subnetwork = subnetwork
+        policy.network_interfaces = [interface]
+        return policy
 
     def get_boot_disk(self, job):
         """
         Given a job request, add a customized boot disk.
         """
         # Reference disk, boot disk type, and size
-        image = job.resources.get("googlebatch_boot_disk_image")
-        size = job.resources.get("googlebatch_boot_disk_gb")
-        typ = job.resources.get("googlebatch_boot_disk_type")
+        image = self.get_param(job, "boot_disk_image")
+        size = self.get_param(job, "boot_disk_gb")
+        typ = self.get_param(job, "boot_disk_type")
 
         # Cut out early if no customization
         if all(x is None for x in [image, size, typ]):

@@ -65,33 +65,6 @@ the ratelimit is hit very easily. We are currently assessing strategies to deliv
 without hitting issues with this rate limit. It looks possible to create "[sinks](https://cloud.google.com/logging/docs/routing/overview#sinks)" using
 Pub Sub, however this would be adding an extra API dependency (and cost). 
 
-### Arguments
-
-And custom arguments can be any of the following, either on the command line or provided in the environment.
-
-| Name | Description | Flag | Type | Environment Variable | Required | Default |
-|------|-------------|------|------|----------------------|----------|---------|
-| project | The name of the Google Project | `--googlebatch-project` | str | `SNAKEMAKE_GOOGLEBATCH_PROJECT` | True |  unset |
-| region | The name of the Google Project region (e.g., us-central1) | str | `--googlebatch-region` |`SNAKEMAKE_GOOGLEBATCH_REGION` | True | unset |
-| machine_type | Google Cloud machine type or VM (mpitune configurations are on c2 and c2d family) | str | `--googlebatch-machine-type` | | False | c2-standard-4 |
-| image_family | Google Cloud image family (defaults to hpc-centos-7) | `--googlebatch-image-family` | str | | False | hpc-centos-7 |
-| image_project | The project the selected image belongs to (defaults to cloud-hpc-image-public) | `--googlebatch-image-project` | str | | False | cloud-hpc-image-public |
-| bucket | A bucket to mount with snakemake data | `--googlebatch-bucket` | str | `SNAKEMAKE_GOOGLEBATCH_BUCKET` | True |  unset |
-| mount_path | The mount path for a bucket (if provided) | `--googlebatch-mount-path` | str | | False | /mnt/share |
-| work_tasks | The default number of work tasks (these are NOT MPI ranks) | `--googlebatch-work-tasks` | int | | False | 1 |
-| cpu_milli | Milliseconds per cpu-second | `--googlebatch-cpu-milli` | int | | False | 1000 |
-| work_tasks_per_node | The default number of work tasks per node (Google Batch calls these tasks) | `--googlebatch-work-tasks-per-node` | int | | False | 1 |
-| memory | Memory in MiB | `--googlebatch-memory` | int | | False | 1000 |
-| retry_count | Retry count (default to 1) | `--googlebatch-retry-count` | int | | False | 1 |
-| max_run_duration | Maximum run duration, string (e.g., 3600s) | `--googlebatch-max-run-duration` | str | | False | "3600s" |
-| labels | Comma separated key value pairs to label job (e.g., model=a3,stage=test) |`--googlebatch-labels` | str | | False | unset|
-| container | Container to use (only when image_family is batch-cos*) [see here](https://cloud.google.com/batch/docs/vm-os-environment-overview#supported_vm_os_images) for families/projects | `--googlebatch-container` | str | | False | unset|
-| keep_source_cache | Cache workflows in your Google Cloud Storage Bucket | `--googlebatch-keep-source-cache` | bool | | False | False |
-| snippet | A comma separated list of one or more snippets to add to your setup | `--googelbatch-snippets` | str | | False | unset |
-
-For machine type, note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
-Also note that you can customize the machine type on the level of the step (see [Step Options](#step-options) below).
-
 #### Choosing an Image
 
 You can read about how to choose an image [here](https://cloud.google.com/batch/docs/view-os-images). Note that
@@ -151,6 +124,9 @@ rule hello_world:
 	shell:
         "..."
 ```
+
+Note that for MPI workloads, mpitune configurations are validated on c2 and c2d instances only.
+
 
 #### googlebatch_image_family
 
@@ -221,6 +197,34 @@ rule hello_world:
 		"...",
 	resources: 
 		googlebatch_work_tasks=1
+	shell:
+        "..."
+```
+
+#### googlebatch_network
+
+The URL of an existing network resource (e.g., `projects/{project}/global/networks/{network}`)
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_network="projects/{project}/global/networks/{network}"
+	shell:
+        "..."
+```
+
+#### googlebatch_subnetwork
+
+The URL of an existing subnetwork resource (e.g., `projects/{project}/regions/{region}/subnetworks/{subnetwork}`)
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_subnetwork="projects/{project}/regions/{region}/subnetworks/{subnetwork}"
 	shell:
         "..."
 ```
