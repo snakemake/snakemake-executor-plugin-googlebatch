@@ -3,16 +3,18 @@
 rule all:
 	input:
 		expand(
-			"{greeting}/gpus-world.txt",
+			"{greeting}/boot-disk-world.txt",
 			greeting = ['hello', 'hola'],
 		),
 
 # First real rule, this is using a wildcard called "greeting"
 rule multilingual_hello_world:
 	output:
-		"{greeting}/gpus-world.txt",
+		"{greeting}/boot-disk-world.txt",
 	resources:
-		nvidia_gpu=1
+		googlebatch_boot_disk_image="batch-centos",
+		googlebatch_boot_disk_type="pd-standard",
+		googlebatch_boot_disk_gb=40
 	shell:
 		"""
 		mkdir -p "{wildcards.greeting}"

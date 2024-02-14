@@ -268,6 +268,50 @@ rule hello_world:
 ```
 
 
+#### googlebatch_boot_disk_type
+
+This is the [boot disk type](https://cloud.google.com/compute/docs/disks#pdspecs).
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_boot_disk_type="pd-standard"
+	shell:
+        "..."
+```
+
+
+#### googlebatch_boot_disk_image
+
+This is the boot disk [image](https://github.com/googleapis/googleapis/blob/2fd7625cf9808234503fd5addc6e2bda8fe5c114/google/cloud/batch/v1/job.proto#L287-L292). If not set, we use the family defined for the job.
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_boot_disk_image="batch-centos"
+	shell:
+        "..."
+```
+
+
+#### googlebatch_boot_disk_gb
+
+The [size of the boot disk](https://github.com/googleapis/googleapis/blob/2fd7625cf9808234503fd5addc6e2bda8fe5c114/google/cloud/batch/v1/job.proto#L314-L324) in GB. This needs to be 30 (default) or larger
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_boot_disk_gb=40
+	shell:
+        "..."
+```
+
 #### googlebatch_retry_count
 
 This will define the retry times for a step overriding the default from the command line.

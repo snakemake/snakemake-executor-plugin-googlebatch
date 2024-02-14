@@ -299,9 +299,36 @@ class GoogleBatchExecutor(RemoteExecutor):
             instances.install_gpu_drivers = True
             policy.accelerators = accelerators
 
+        # Customize boot disk
+        boot_disk = self.get_boot_disk(job)
+        if boot_disk is not None:
+            policy.boot_disk = boot_disk
+
         instances.policy = policy
         allocation_policy.instances = [instances]
         return allocation_policy
+
+    def get_boot_disk(self, job):
+        """
+        Given a job request, add a customized boot disk.
+        """
+        # Reference disk, boot disk type, and size
+        image = job.resources.get("googlebatch_boot_disk_image")
+        size = job.resources.get("googlebatch_boot_disk_gb")
+        typ = job.resources.get("googlebatch_boot_disk_type")
+
+        # Cut out early if no customization
+        if all(x is None for x in [image, size, typ]):
+            return
+
+        boot_disk = batch_v1.AllocationPolicy.Disk()
+        if image is not None:
+            boot_disk.image = image
+        if size is not None:
+            boot_disk.size_gb = size
+        if typ is not None:
+            boot_disk.type_ = typ
+        return boot_disk
 
     def get_accelerators(self, job):
         """

@@ -100,10 +100,32 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
-    cpu_milli: Optional[int] = field(
-        default=1000,
+    # Note that additional disks can be added, but this is not exposed yet
+    boot_disk_gb: Optional[int] = field(
+        default=None,
         metadata={
-            "help": "Milliseconds per cpu-second",
+            "help": "Boot disk size (GB)",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    # local SSD uses type "local-ssd".
+    # Also "pd-balanced", "pd-extreme", "pd-ssd", "pd-standard"
+    boot_disk_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Boot disk type. (e.g., gcloud compute disk-types list)",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    # if not set, defaults to family
+    boot_disk_image: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Boot disk image (e.g., batch-debian, bath-centos)",
             "env_var": False,
             "required": False,
         },
