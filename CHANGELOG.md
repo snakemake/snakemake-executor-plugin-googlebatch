@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.2.0...v0.3.0) (2024-02-15)
+
+
+### Features
+
+* add simple example with cos ([#22](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/22)) ([2951454](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/2951454defef65a24396a16f7b9c4103e4156571))
+* add support for Google Batch GPUs ([#26](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/26)) ([f2af21c](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/f2af21c6804d5c687d2bc9443497c98fb60641bc))
+* expose network policy interfaces ([#28](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/28)) ([41c8d44](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/41c8d447502d5bba485b14ebe1eab1f2bf6b50dd))
+* preemption ([#25](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/25)) ([d6913a1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/d6913a13b59f94b4f7c590dfe8c446c535f5c883))
+* support for boot disk type, size, and image ([#27](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/27)) ([d5de5a1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/d5de5a136a63686e8c41077a6cd4aa96816f4a93))
+
 ## [0.2.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.1.1...v0.2.0) (2024-01-02)
 
 
