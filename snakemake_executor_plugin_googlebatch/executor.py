@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from typing import List, Generator
+from typing import List
 from snakemake_interface_common.exceptions import WorkflowError
 from snakemake_interface_executor_plugins.executors.base import SubmittedJobInfo
 from snakemake_interface_executor_plugins.executors.remote import RemoteExecutor
@@ -95,20 +95,52 @@ class GoogleBatchExecutor(RemoteExecutor):
         uid = str(uuid.uuid4())
         return job.name.replace("_", "-") + "-" + uid[0:6]
 
-    def validate(self, job):
+    def get_container(self, job, entrypoint=None, commands=None):
         """
-        Ensure the choices of arguments make sense.
+        Get a container, if batch-cos is defined.
         """
-        container = self.get_container(job)
         family = self.get_param(job, "image_family")
+        if "batch-cos" not in family:
+            return
 
-        # We can't take a custom container if batch-cos is not set
-        # We only give a warning here in case it's a one-off setting
-        # https://cloud.google.com/batch/docs/vm-os-environment-overview
-        if "batch-cos" not in family and container:
-            self.logger.warning(
-                f"Job {job} has container without image_family batch-cos*."
+        # Default entrypoint assumes the setup wrote our command here
+        if entrypoint is None:
+            entrypoint = "/bin/bash"
+        if commands is None:
+            commands = ["/tmp/workdir/entrypoint.sh"]
+
+        # We use the default snakemake image or the container, but also
+        # honor a googlebatch_container in case it is distinct
+        image = self.workflow.remote_execution_settings.container_image
+        image = self.get_param(job, "container") or image
+        container = batch_v1.Runnable.Container()
+        container.image_uri = image
+
+        # This is written by writer.setup() for COS
+        container.entrypoint = entrypoint
+        container.commands = commands
+
+        # This will ensure the Snakefile is in the PWD of the COS container
+        container.volumes = ["/tmp/workdir:/tmp/workdir"]
+        container.options = "--network host --workdir /tmp/workdir"
+
+        username = self.get_param(job, "docker_username")
+        password = self.get_param(job, "docker_password")
+
+        # Both are required
+        if (username and not password) or (password and not username):
+            raise WorkflowError(
+                "docker username and password are required if one is provided"
             )
+
+        if username and password:
+            container.username = username
+            container.password = password
+
+        # Not sure if we want to add this
+        # https://github.com/googleapis/googleapis/blob/master/google/cloud/batch/v1/task.proto#L230-L234
+        # enable_image_streaming true
+        return container
 
     def is_preemptible(self, job):
         """
@@ -128,18 +160,20 @@ class GoogleBatchExecutor(RemoteExecutor):
         Get a command writer for a job.
         """
         family = self.get_param(job, "image_family")
-        container = self.workflow.remote_execution_settings.container_image
         command = self.format_job_exec(job)
         snakefile = self.read_snakefile()
 
         # Any custom snippets
         snippets = self.get_param(job, "snippets")
 
+        snakefile_path = "./Snakefile"
+        if "batch-cos" in family:
+            snakefile_path = "/tmp/workdir/Snakefile"
         return cmdutil.get_writer(family)(
             command=command,
-            container=container,
             snakefile=snakefile,
             snippets=snippets,
+            snakefile_path=snakefile_path,
             settings=self.workflow.executor_settings,
             resources=job.resources,
         )
@@ -167,20 +201,31 @@ class GoogleBatchExecutor(RemoteExecutor):
         self.logger.info("\n🌟️ Setup Command:")
         print(setup_command)
 
-        pre_commands = []
-
-        # Run command
-        run_command = writer.run(pre_commands)
-        self.logger.info("\n🐍️ Snakemake Command:")
-        print(run_command)
-
         # Add environment variables to the task
         envars = self.workflow.spawned_job_args_factory.envvars()
 
         # A single runnable to execute snakemake
         runnable = batch_v1.Runnable()
-        runnable.script = batch_v1.Runnable.Script()
-        runnable.script.text = run_command
+
+        # If we have a container, add it - the script isn't used
+        container = self.get_container(job)
+        if container is not None:
+            runnable.container = container
+            snakefile_text = writer.write_snakefile()
+        else:
+            # Run command (not used for COS)
+            run_command = writer.run()
+            self.logger.info("\n🐍️ Snakemake Command:")
+            print(run_command)
+
+            runnable.script = batch_v1.Runnable.Script()
+            runnable.script.text = run_command
+            snakefile_text = writer.write_snakefile()
+
+        # Runnable to write Snakefile on the host
+        snakefile_step = batch_v1.Runnable()
+        snakefile_step.script = batch_v1.Runnable.Script()
+        snakefile_step.script.text = snakefile_text
 
         # Note that secret variables seem to require some
         # extra secret API enabled
@@ -198,7 +243,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         barrier = batch_v1.Runnable()
         barrier.barrier = batch_v1.Runnable.Barrier()
         barrier.barrier.name = "wait-for-setup"
-        task.runnables = [setup, barrier, runnable]
+        task.runnables = [setup, snakefile_step, barrier, runnable]
 
         # Are we adding storage?
         self.add_storage(job, task)
@@ -243,6 +288,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         # The job's parent is the region in which the job will run
         create_request.parent = self.project_parent(job)
         createdjob = self.batch.create_job(create_request)
+        print(createdjob)
 
         # Save aux metadata
         # Last seen will hold the timestamp of last recorded status
@@ -400,9 +446,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         assert os.path.exists(self.workflow.main_snakefile)
         return os.path.relpath(self.workflow.main_snakefile, os.getcwd())
 
-    async def check_active_jobs(
-        self, active_jobs: List[SubmittedJobInfo]
-    ) -> Generator[SubmittedJobInfo, None, None]:
+    async def check_active_jobs(self, active_jobs: List[SubmittedJobInfo]):
         """
         Check the status of active jobs.
         """
