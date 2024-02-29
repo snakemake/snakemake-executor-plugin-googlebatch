@@ -142,6 +142,15 @@ rule hello_world:
         "..."
 ```
 
+Note that the way to get updated names is to run:
+
+```bash
+gcloud compute images list \
+    --project=batch-custom-image \
+    --no-standard-images
+```
+
+And see [this page](https://cloud.google.com/batch/docs/view-os-images) for more details.
 
 #### googlebatch_image_project
 
@@ -369,6 +378,36 @@ rule hello_world:
 		"...",
 	resources: 
 		googlebatch_container="ghcr.io/rse-ops/atacseq:app-latest"
+	shell:
+        "..."
+```
+
+#### googlebatch_docker_username
+
+For use with the container operating system (COS) if your container needs credentials to access. Both this field and `googlebatch_docker_password` are required.
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_docker_username="monkey"
+	shell:
+        "..."
+```
+
+
+
+#### googlebatch_docker_password
+
+For use with the container operating system (COS) if your container needs credentials to access. Both this field and `googlebatch_docker_username` are required.
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_docker_password="monkey"
 	shell:
         "..."
 ```
