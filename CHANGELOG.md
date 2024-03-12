@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.0...v0.3.1) (2024-03-12)
+
+
+### Bug Fixes
+
+* update to latest interface ([#30](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/30)) ([af536dc](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/af536dc744fddccd6da5221bef1539c4d6fc173d))
+
 ## [0.3.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.2.0...v0.3.0) (2024-02-15)
 
 
