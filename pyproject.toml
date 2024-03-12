@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "snakemake-executor-plugin-googlebatch"
-version = "0.3.0"
+version = "0.3.1"
 description = ""
 authors = [
     "Vanessa Sochat <sochat1@llnl.gov>",
