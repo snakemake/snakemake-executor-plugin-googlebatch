@@ -19,7 +19,7 @@ requests = "^2.31.0"
 google-api-core = "^2.12.0"
 google-cloud-storage = "^2.12.0"
 snakemake-interface-common = "^1.14.0"
-snakemake-interface-executor-plugins = "^8.1.1"
+snakemake-interface-executor-plugins = "^9.0.0"
 jinja2 = "^3.1.2"
 google-cloud-logging = "^3.8.0"
 
@@ -29,7 +29,7 @@ flake8 = "^6.1.0"
 coverage = "^7.3.1"
 pytest = "^7.4.2"
 snakemake = {git = "https://github.com/snakemake/snakemake.git", branch="main"}
-snakemake-storage-plugin-s3 = "^0.2.7"
+snakemake-storage-plugin-s3 = "^0.2.10"
 
 [tool.coverage.run]
 omit = [".*", "*/site-packages/*", "Snakefile"]
