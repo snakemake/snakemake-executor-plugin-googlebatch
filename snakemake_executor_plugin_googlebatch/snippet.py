@@ -37,7 +37,7 @@ class SnippetGroup:
         self.load(spec)
         self.parse()
 
-    def render_setup(self, command, container):
+    def render_setup(self, command):
         """
         Render snippets into a chunk for the setup.
         """
@@ -47,11 +47,10 @@ class SnippetGroup:
                 settings=self.settings,
                 resources=self.resources,
                 command=command,
-                container=container,
             )
         return render
 
-    def render_run(self, command, container):
+    def render_run(self, command):
         """
         Render snippets into a chunk for the run.
         """
@@ -61,7 +60,6 @@ class SnippetGroup:
                 settings=self.settings,
                 resources=self.resources,
                 command=command,
-                container=container,
             )
         return render
 

@@ -9,19 +9,12 @@ gcloud compute images list \
     --no-standard-images
 ```
 
-Here is how to use the debian base:
+Here is an example command:
 
 ```bash
 GOOGLE_PROJECT=myproject
-snakemake --jobs 1 --executor googlebatch --googlebatch-image-family batch-debian-11-official --googlebatch-region us-central1 --googlebatch-image-project batch-custom-image --googlebatch-project ${GOOGLE_PROJECT} --default-storage-provider s3 --default-storage-prefix s3://my-snakemake-testing
+snakemake --jobs 1 --executor googlebatch --googlebatch-image-family batch-cos-stable-official --googlebatch-region us-central1 --googlebatch-image-project batch-custom-image --googlebatch-project ${GOOGLE_PROJECT} --default-storage-provider s3 --default-storage-prefix s3://my-snakemake-testing
 ```
-
-And a centos.
-
-```bash
-snakemake --jobs 1 --executor googlebatch --googlebatch-image-family batch-centos-7-official --googlebatch-region us-central1 --googlebatch-image-project batch-custom-image --googlebatch-project ${GOOGLE_PROJECT} --default-storage-provider s3 --default-storage-prefix s3://my-snakemake-testing
-```
-
 
 See [this link](https://cloud.google.com/batch/docs/vm-os-environment-overview#supported_vm_os_images) for how to find a compatible COS image project and family.
 You can also see information [here](https://cloud.google.com/batch/docs/view-os-images),
