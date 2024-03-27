@@ -39,10 +39,10 @@ for more information.
 
 ### Logging
 
-For logging, for an interactive run from the command line we provide status updates in the console you have running locally. For full logs, you can
-go to the [Google Cloud Batch interface](https://console.cloud.google.com/batch/jobs?project=llnl-flux) and click 
-on your job of interest, and then the "Logs" tab. If you don't see logs, look in the "Events" tab, as usually there
-is an error with your configuration (e.g., an unknown image or family).
+For logging, for an interactive run from the command line we provide status updates in the console you have running locally.
+For full logs, you can go to the [Google Cloud Batch interface](https://console.cloud.google.com/batch/jobs) and click 
+on your job of interest, and then the "Logs" tab. If you don't see logs, look in the "Events" tab, as usually there is an error with your configuration (e.g., an unknown image or family).
+It is important to [enable the logging API](https://cloud.google.com/logging/docs/api/enable-api) for this to work.
 
 #### Isolated Logs
 
