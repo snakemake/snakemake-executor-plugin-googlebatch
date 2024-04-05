@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.1...v0.3.2) (2024-04-05)
+
+
+### Bug Fixes
+
+* ensure we install datrie ([#37](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/37)) ([62f7404](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/62f740452ad2a607762040e5e315360f7917a6c6))
+
 ## [0.3.1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.0...v0.3.1) (2024-03-12)
 
 
