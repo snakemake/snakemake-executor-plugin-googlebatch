@@ -44,6 +44,7 @@ chmod +x ./miniconda.sh
 bash ./miniconda.sh -b -u -p /opt/conda
 rm -rf ./miniconda.sh
 
+conda install datrie --yes
 which python
 /opt/conda/bin/python --version
 ./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-gcs
