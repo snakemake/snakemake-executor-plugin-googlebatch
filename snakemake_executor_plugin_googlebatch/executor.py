@@ -122,7 +122,9 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # This will ensure the Snakefile is in the PWD of the COS container
         container.volumes = ["/tmp/workdir:/tmp/workdir"]
-        container.options = "--network host --workdir /tmp/workdir"
+        container.options = (
+            "--network host --workdir /tmp/workdir -e PYTHONUNBUFFERED=1"
+        )
 
         username = self.get_param(job, "docker_username")
         password = self.get_param(job, "docker_password")
@@ -160,7 +162,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         Get a command writer for a job.
         """
         family = self.get_param(job, "image_family")
-        command = self.format_job_exec(job)
+        command = self.format_job_exec(job) + " --verbose"
         snakefile = self.read_snakefile()
 
         # Any custom snippets
@@ -444,7 +446,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         Use a Snakefile in the present working directory since we write it.
         """
         assert os.path.exists(self.workflow.main_snakefile)
-        return "Snakefile"
+        return os.path.relpath(self.workflow.main_snakefile, os.getcwd())
 
     async def check_active_jobs(self, active_jobs: List[SubmittedJobInfo]):
         """
