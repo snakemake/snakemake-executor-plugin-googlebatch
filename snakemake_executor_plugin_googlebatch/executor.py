@@ -398,7 +398,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         Use a Snakefile in the present working directory since we write it.
         """
         assert os.path.exists(self.workflow.main_snakefile)
-        return "Snakefile"
+        return os.path.relpath(self.workflow.main_snakefile, os.getcwd())
 
     async def check_active_jobs(
         self, active_jobs: List[SubmittedJobInfo]
