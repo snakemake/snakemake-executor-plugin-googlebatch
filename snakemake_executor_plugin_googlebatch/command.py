@@ -3,7 +3,9 @@
 import snakemake_executor_plugin_googlebatch.snippet as sniputil
 
 write_snakefile = """
-snakefile_path=$(realpth %s)
+#!/bin/bash
+
+snakefile_path=$(realpath %s)
 snakefile_dir=$(dirname $snakefile_path)
 mkdir -p $snakefile_dir || true
 cat <<EOF > $snakefile_path
