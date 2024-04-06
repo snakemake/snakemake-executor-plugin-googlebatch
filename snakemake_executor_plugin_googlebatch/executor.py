@@ -162,7 +162,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         Get a command writer for a job.
         """
         family = self.get_param(job, "image_family")
-        command = self.format_job_exec(job) + " --verbose"
+        command = self.format_job_exec(job)
         snakefile = self.read_snakefile()
 
         # Any custom snippets
