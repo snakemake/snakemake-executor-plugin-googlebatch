@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.3](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.2...v0.3.3) (2024-04-06)
+
+
+### Bug Fixes
+
+* make get_snakefile return rel path to snakefile ([#40](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/40)) ([#41](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/41)) ([de2b1da](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/de2b1da1e303a21824408ceea0e316c42e4d1a86))
+
+## [0.3.2](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.1...v0.3.2) (2024-04-05)
+
+
+### Bug Fixes
+
+* ensure we install datrie ([#37](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/37)) ([62f7404](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/62f740452ad2a607762040e5e315360f7917a6c6))
+
+## [0.3.1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.0...v0.3.1) (2024-03-12)
+
+
+### Bug Fixes
+
+* update to latest interface ([#30](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/30)) ([af536dc](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/af536dc744fddccd6da5221bef1539c4d6fc173d))
+
 ## [0.3.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.2.0...v0.3.0) (2024-02-15)
 
 

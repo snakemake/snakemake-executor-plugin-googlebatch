@@ -55,32 +55,22 @@ install_snakemake = """
 echo "I am batch index ${BATCH_TASK_INDEX}"
 
 export PATH=/opt/conda/bin:${PATH}
-if [[ "${BATCH_TASK_INDEX}" == "0" ]]; then
-  repo=https://raw.githubusercontent.com/snakemake/snakemake-executor-plugin-googlebatch
-  path=main/scripts/install-snek.sh
-  wget ${repo}/${path}
-  chmod +x ./install-snek.sh
-  workdir=$(pwd)
-  url=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-  wget ${url} -O ./miniconda.sh
-  chmod +x ./miniconda.sh
-  bash ./miniconda.sh -b -u -p /opt/conda
-  rm -rf ./miniconda.sh
+repo=https://raw.githubusercontent.com/snakemake/snakemake-executor-plugin-googlebatch
+path=main/scripts/install-snek.sh
+wget ${repo}/${path}
+chmod +x ./install-snek.sh
+workdir=$(pwd)
+url=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+wget ${url} -O ./miniconda.sh
+chmod +x ./miniconda.sh
+bash ./miniconda.sh -b -u -p /opt/conda
+rm -rf ./miniconda.sh
 
-  # Failed building wheel for datrie python 3.12
-  conda install datrie --yes
-  which python
-  /opt/conda/bin/python --version
-  ./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-gcs
-  ./install-snek.sh https://github.com/snakemake/snakemake
-  touch /tmp/snakemake-install-done.txt
-else
-  while [ ! -f snakemake-install-done.txt ]
-  do
-    sleep 5
-  done
-  echo "Snakemake install is done"
-fi
+conda install datrie --yes
+which python
+/opt/conda/bin/python --version
+./install-snek.sh https://github.com/snakemake/snakemake-storage-plugin-gcs
+./install-snek.sh https://github.com/snakemake/snakemake
 
 cd ${workdir}
 """
