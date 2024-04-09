@@ -466,6 +466,7 @@ class GoogleBatchExecutor(RemoteExecutor):
             except DeadlineExceeded:
                 msg = f"Google Batch job '{j.external_jobid}' exceeded deadline. "
                 self.report_job_error(j, msg=msg, aux_logs=aux_logs)
+                yield j
 
             self.logger.info(f"Job {jobid} has state {response.status.state.name}")
             for event in response.status.status_events:
