@@ -122,7 +122,9 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # This will ensure the Snakefile is in the PWD of the COS container
         container.volumes = ["/tmp/workdir:/tmp/workdir"]
-        container.options = "--network host --workdir /tmp/workdir"
+        container.options = (
+            "--network host --workdir /tmp/workdir -e PYTHONUNBUFFERED=1"
+        )
 
         username = self.get_param(job, "docker_username")
         password = self.get_param(job, "docker_password")
