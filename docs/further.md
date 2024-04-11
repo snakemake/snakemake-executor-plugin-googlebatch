@@ -100,6 +100,8 @@ $ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache
 The following environment variables are available within any Google batch run:
 
  - `BATCH_TASK_INDEX`: The index of the workflow step (Google Batch calls a "task")
+ - `GOOGLEBATCH_DOCKER_PASSWORD`: your docker registry passwork if using the container operating system (COS) and your container requires credentials
+ - `GOOGLEBATCH_DOCKER_USERNAME`: the same, but the username
 
 ### GPU
 
@@ -382,35 +384,6 @@ rule hello_world:
         "..."
 ```
 
-#### googlebatch_docker_username
-
-For use with the container operating system (COS) if your container needs credentials to access. Both this field and `googlebatch_docker_password` are required.
-
-```console
-rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_docker_username="monkey"
-	shell:
-        "..."
-```
-
-
-
-#### googlebatch_docker_password
-
-For use with the container operating system (COS) if your container needs credentials to access. Both this field and `googlebatch_docker_username` are required.
-
-```console
-rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_docker_password="monkey"
-	shell:
-        "..."
-```
 
 #### googlebatch_snippets
 
