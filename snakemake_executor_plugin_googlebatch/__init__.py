@@ -40,6 +40,33 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
+    container: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "A custom container for use with Google Batch COS",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    docker_password: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "A docker registry password for COS if credentials are required",
+            "env_var": True,
+            "required": False,
+        },
+    )
+
+    docker_username: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "A docker registry username for COS if credentials are required",
+            "env_var": True,
+            "required": False,
+        },
+    )
+
     # mpitune configurations are validated on c2 and c2d instances only.
     machine_type: Optional[str] = field(
         default="c2-standard-4",

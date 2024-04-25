@@ -2,10 +2,31 @@
 
 import snakemake_executor_plugin_googlebatch.snippet as sniputil
 
-write_snakefile = """cat <<EOF > ./Snakefile
+write_snakefile = """
+#!/bin/bash
+snakefile_path=$(realpath %s)
+snakefile_dir=$(dirname $snakefile_path)
+mkdir -p $snakefile_dir || true
+cat <<EOF > $snakefile_path
 %s
 EOF
-cat ./Snakefile
+echo "Snakefile is at $snakefile_path"
+cat $snakefile_path
+"""
+
+write_entrypoint = """
+#!/bin/bash
+
+mkdir -p /tmp/workdir
+cat <<EOF > /tmp/workdir/entrypoint.sh
+%s
+
+# https://github.com/boto/botocore/issues/3111
+python3 -m pip install boto3==1.33.11
+python3 -m pip install urllib3==1.26.17
+EOF
+chmod +x /tmp/workdir/entrypoint.sh
+cat /tmp/workdir/entrypoint.sh
 """
 
 snakemake_base_environment = """export HOME=/root
@@ -32,6 +53,7 @@ sudo apt-get install -y wget bzip2 ca-certificates gnupg2 squashfs-tools git
 
 install_snakemake = """
 echo "I am batch index ${BATCH_TASK_INDEX}"
+
 export PATH=/opt/conda/bin:${PATH}
 repo=https://raw.githubusercontent.com/snakemake/snakemake-executor-plugin-googlebatch
 path=main/scripts/install-snek.sh
@@ -73,19 +95,19 @@ class CommandWriter:
     def __init__(
         self,
         command=None,
-        container=None,
         snakefile=None,
         snippets=None,
         settings=None,
         resources=None,
+        snakefile_path=None,
     ):
         self.command = command
-        self.container = container
 
-        # This is the contents of the snakefile and not the path
+        # This is the contents of the snakefile
         self.snakefile = snakefile
         self.resources = resources
         self.settings = settings
+        self.snakefile_path = snakefile_path
 
         # Prepare (and validate) any provided snippets for the job
         self.load_snippets(snippets)
@@ -100,23 +122,20 @@ class CommandWriter:
         self.snippets = sniputil.SnippetGroup(spec, self.settings, self.resources)
         self.snippets.validate()
 
-    def run(self, pre_commands=None):
+    def run(self):
         """
         Write the command script. This is likely shared.
 
         We allow one or more pre-commands (e.g., to download artifacts)
         """
-        pre_commands = pre_commands or []
-        command = ""
-        for pre_command in pre_commands:
-            command += pre_command + "\n"
+        command = "\n"
 
         # Ensure we check for snakemake
-        command += "\n" + check_for_snakemake
+        command += check_for_snakemake
 
         # If we have a snippet group, add snippets before installing snakemake
         if self.snippets:
-            command += self.snippets.render_run(self.command, self.container)
+            command += self.snippets.render_run(self.command)
 
         # Don't include the main command twice
         if self.snippets.has_run_command_snippet:
@@ -127,18 +146,24 @@ class CommandWriter:
         """
         Derive the correct setup command based on the family.
         """
-        raise NotImplementedError(f"Setup is not implemented for {self}.")
+        pass
+
+    def write_snakefile(self):
+        """
+        Return tempalted snakefile. We do this in a separate step so
+        a later container step can use it.
+        """
+        return write_snakefile % (self.snakefile_path, self.snakefile)
 
     def _template_setup(self, template, use_container=False):
         """
         Shared logic to template the setup command.
         """
         command = template
-        command += write_snakefile % self.snakefile
 
         # If we have a snippet group, add snippets before installing snakemake
         if self.snippets:
-            command += self.snippets.render_setup(self.command, self.container)
+            command += self.snippets.render_setup(self.command)
 
         # If we don't use container, install snakemkae to VM
         if not use_container:
@@ -153,26 +178,12 @@ class COSWriter(CommandWriter):
 
     def setup(self):
         """
-        We pre-pull the container so they start at the same time.
+        Setup for the container operating system means writing
+        the entrypoint. We do not use any snippets here, using
+        a container assumes what the user needs is in the
+        container.
         """
-        command = f"docker pull {self.container}"
-        return self._template_setup(command, use_container=True)
-
-    def run(self, pre_commands=None):
-        """
-        Write the run command script for cos.
-
-        For this command we assume the container has python as python3
-        """
-        pre_commands = pre_commands or []
-        command = ""
-        for pre_command in pre_commands:
-            command += pre_command + "\n"
-        command += write_snakefile % self.snakefile
-        volume = "$PWD/Snakefile:./Snakefile"
-        docker = f"docker run -it -v {volume} {self.container} {self.command}"
-        command += docker
-        return command
+        return write_entrypoint % self.command
 
 
 class DebianWriter(CommandWriter):
