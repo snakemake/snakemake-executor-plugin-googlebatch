@@ -39,10 +39,10 @@ for more information.
 
 ### Logging
 
-For logging, for an interactive run from the command line we provide status updates in the console you have running locally. For full logs, you can
-go to the [Google Cloud Batch interface](https://console.cloud.google.com/batch/jobs?project=llnl-flux) and click 
-on your job of interest, and then the "Logs" tab. If you don't see logs, look in the "Events" tab, as usually there
-is an error with your configuration (e.g., an unknown image or family).
+For logging, for an interactive run from the command line we provide status updates in the console you have running locally.
+For full logs, you can go to the [Google Cloud Batch interface](https://console.cloud.google.com/batch/jobs) and click 
+on your job of interest, and then the "Logs" tab. If you don't see logs, look in the "Events" tab, as usually there is an error with your configuration (e.g., an unknown image or family).
+It is important to [enable the logging API](https://cloud.google.com/logging/docs/api/enable-api) for this to work.
 
 #### Isolated Logs
 
@@ -100,6 +100,8 @@ $ snakemake --jobs 1 --executor googlebatch --googlebatch-bucket snakemake-cache
 The following environment variables are available within any Google batch run:
 
  - `BATCH_TASK_INDEX`: The index of the workflow step (Google Batch calls a "task")
+ - `GOOGLEBATCH_DOCKER_PASSWORD`: your docker registry passwork if using the container operating system (COS) and your container requires credentials
+ - `GOOGLEBATCH_DOCKER_USERNAME`: the same, but the username
 
 ### GPU
 
@@ -142,6 +144,15 @@ rule hello_world:
         "..."
 ```
 
+Note that the way to get updated names is to run:
+
+```bash
+gcloud compute images list \
+    --project=batch-custom-image \
+    --no-standard-images
+```
+
+And see [this page](https://cloud.google.com/batch/docs/view-os-images) for more details.
 
 #### googlebatch_image_project
 
@@ -372,6 +383,7 @@ rule hello_world:
 	shell:
         "..."
 ```
+
 
 #### googlebatch_snippets
 
