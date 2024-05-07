@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.3...v0.4.0) (2024-05-07)
+
+
+### Features
+
+* add support for using the COS version of google batch ([b0b7614](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/b0b7614e37a05f45cce2861b53fa417bbfed59b8))
+* landsat example ([#50](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/50)) ([944767f](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/944767f7d80b56f37e3982d9dace6d97de46f718))
+
 ## [0.3.3](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.2...v0.3.3) (2024-04-06)
 
 
