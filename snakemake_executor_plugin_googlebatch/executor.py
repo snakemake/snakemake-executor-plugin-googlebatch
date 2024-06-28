@@ -359,14 +359,13 @@ class GoogleBatchExecutor(RemoteExecutor):
         network_policy = self.get_network_policy(job)
         if network_policy is not None:
             allocation_policy.network = network_policy
-        return allocation_policy
-
-        # Add custom compute service account
-        service_account = self.get_param("service_account")
+               # Add custom compute service account
+        service_account = self.get_service_account(job)
+        
         if service_account is not None:
             allocation_policy.service_account = service_account
 
-
+        return allocation_policy
 
     def get_network_policy(self, job):
         """
@@ -385,6 +384,16 @@ class GoogleBatchExecutor(RemoteExecutor):
             interface.subnetwork = subnetwork
         policy.network_interfaces = [interface]
         return policy
+
+    def get_service_account(self, job):
+        """
+        Givena job request, get the service account
+        """
+        service_account_email = self.get_param(job, "service_account")
+        service_account = batch_v1.ServiceAccount()
+        if service_account_email is not None:
+            service_account.email = service_account_email
+        return service_account
 
     def get_boot_disk(self, job):
         """
