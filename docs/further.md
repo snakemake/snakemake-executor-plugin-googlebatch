@@ -240,6 +240,20 @@ rule hello_world:
         "..."
 ```
 
+#### googlebatch_service_account
+
+The email of custom compute service account to be used by Batch (e.g., `snakemake-sa@projectid.iam.gserviceaccount.com`)
+
+```console
+rule hello_world:
+	output:
+		"...",
+	resources: 
+		googlebatch_service_account="snakemake-sa@projectid.iam.gserviceaccount.com"
+	shell:
+        "..."
+```
+
 #### googlebatch_cpu_milli
 
 This will define the milliseconds per cpu-second for a particular step, overriding the default from the command line.
