@@ -159,7 +159,7 @@ class ExecutorSettings(ExecutorSettingsBase):
         default=None,
         metadata={
             "help": "The email of a customer compute service account",
-            "env_var": False,
+            "env_var": True,
             "required": False,
         },
     )

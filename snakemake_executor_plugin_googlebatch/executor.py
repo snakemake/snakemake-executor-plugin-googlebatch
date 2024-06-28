@@ -363,7 +363,7 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # Add custom compute service account
         service_account = self.get_param("service_account")
-        if compute_service_account is not None:
+        if service_account is not None:
             allocation_policy.service_account = service_account
 
 
