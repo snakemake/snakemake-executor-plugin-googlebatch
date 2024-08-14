@@ -1,7 +1,7 @@
 from typing import Optional
 
 import snakemake.common.tests
-import snakemake.settings
+import snakemake.settings.types
 import os
 from snakemake_executor_plugin_googlebatch import ExecutorSettings
 from snakemake_interface_executor_plugins.settings import ExecutorSettingsBase
@@ -29,7 +29,7 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
 
     def get_remote_execution_settings(
         self,
-    ) -> snakemake.settings.RemoteExecutionSettings:
+    ) -> snakemake.settings.types.RemoteExecutionSettings:
         return snakemake.settings.RemoteExecutionSettings(
             seconds_between_status_checks=10,
             envvars=self.get_envvars(),
