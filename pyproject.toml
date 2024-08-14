@@ -27,7 +27,7 @@ google-cloud-logging = "^3.8.0"
 black = "^24.4.0"
 flake8 = "^6.1.0"
 coverage = "^7.3.1"
-pytest = "^7.4.2"
+pytest = ">=7.4.2,<9.0.0"
 snakemake = {git = "https://github.com/snakemake/snakemake.git", branch="main"}
 snakemake-storage-plugin-s3 = "^0.2.10"
 
