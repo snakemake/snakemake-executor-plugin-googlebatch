@@ -385,7 +385,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         policy.network_interfaces = [interface]
         return policy
 
-    def get_service_account(self, job):
+    def get_service_account(self, job: JobExecutorInterface) -> batch_v1.ServiceAccount:
         """
         Givena job request, get the service account
         """
