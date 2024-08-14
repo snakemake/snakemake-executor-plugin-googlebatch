@@ -359,9 +359,9 @@ class GoogleBatchExecutor(RemoteExecutor):
         network_policy = self.get_network_policy(job)
         if network_policy is not None:
             allocation_policy.network = network_policy
-               # Add custom compute service account
+            # Add custom compute service account
         service_account = self.get_service_account(job)
-        
+
         if service_account is not None:
             allocation_policy.service_account = service_account
 
