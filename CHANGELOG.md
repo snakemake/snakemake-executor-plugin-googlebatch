@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.4.0...v0.5.0) (2024-08-14)
+
+
+### Features
+
+* Add support for customer compute service account ([#51](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/51), [@hnawar](https://github.com/hnawar)) ([#52](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/52)) ([8678e20](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/8678e20db8979c07089a7a9f9dd108a912d5107f))
+
 ## [0.4.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.3.3...v0.4.0) (2024-05-07)
 
 
