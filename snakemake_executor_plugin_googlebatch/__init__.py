@@ -155,6 +155,15 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
+    service_account: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "The email of a customer compute service account",
+            "env_var": True,
+            "required": False,
+        },
+    )
+
     # local SSD uses type "local-ssd".
     # Also "pd-balanced", "pd-extreme", "pd-ssd", "pd-standard"
     boot_disk_type: Optional[str] = field(

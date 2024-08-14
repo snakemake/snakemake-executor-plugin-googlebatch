@@ -119,11 +119,11 @@ This will define the machine type for a particular step, overriding the default 
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_machine_type="c3-standard-112"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_machine_type="c3-standard-112"
+    shell:
         "..."
 ```
 
@@ -136,11 +136,11 @@ This will define the image family for a particular step, overriding the default 
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_image_family="hpc-centos-7"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_image_family="hpc-centos-7"
+    shell:
         "..."
 ```
 
@@ -160,11 +160,11 @@ This will define the image project for a particular step, overriding the default
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_image_project="cloud-hpc-image-public"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_image_project="cloud-hpc-image-public"
+    shell:
         "..."
 ```
 
@@ -175,11 +175,11 @@ This will define the bucket for a particular step, overriding the default from t
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_bucket="my-snakemake-batch-bucket"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_bucket="my-snakemake-batch-bucket"
+    shell:
         "..."
 ```
 
@@ -189,11 +189,11 @@ This will define the mount path for a bucket for a particular step, overriding t
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_mount_path="/mnt/workflow"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_mount_path="/mnt/workflow"
+    shell:
         "..."
 ```
 
@@ -204,11 +204,11 @@ This will define the work tasks for a particular step, overriding the default fr
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_work_tasks=1
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_work_tasks=1
+    shell:
         "..."
 ```
 
@@ -218,11 +218,11 @@ The URL of an existing network resource (e.g., `projects/{project}/global/networ
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_network="projects/{project}/global/networks/{network}"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_network="projects/{project}/global/networks/{network}"
+    shell:
         "..."
 ```
 
@@ -232,11 +232,25 @@ The URL of an existing subnetwork resource (e.g., `projects/{project}/regions/{r
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_subnetwork="projects/{project}/regions/{region}/subnetworks/{subnetwork}"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_subnetwork="projects/{project}/regions/{region}/subnetworks/{subnetwork}"
+    shell:
+        "..."
+```
+
+#### googlebatch_service_account
+
+The email of custom compute service account to be used by Batch (e.g., `snakemake-sa@projectid.iam.gserviceaccount.com`)
+
+```console
+rule hello_world:
+    output:
+        "...",
+    resources: 
+        googlebatch_service_account="snakemake-sa@projectid.iam.gserviceaccount.com"
+    shell:
         "..."
 ```
 
@@ -246,11 +260,11 @@ This will define the milliseconds per cpu-second for a particular step, overridi
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_cpu_mulli=2000
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_cpu_mulli=2000
+    shell:
         "..."
 ```
 
@@ -260,11 +274,11 @@ This will define the work tasks per node (Google batch calls these tasks) for a 
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_work_tasks_per_node=2
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_work_tasks_per_node=2
+    shell:
         "..."
 ```
 
@@ -274,11 +288,11 @@ This will define the memory for a particular step as an integer in MiB, overridi
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_memory=2000
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_memory=2000
+    shell:
         "..."
 ```
 
@@ -289,11 +303,11 @@ This is the [boot disk type](https://cloud.google.com/compute/docs/disks#pdspecs
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_boot_disk_type="pd-standard"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_boot_disk_type="pd-standard"
+    shell:
         "..."
 ```
 
@@ -304,11 +318,11 @@ This is the boot disk [image](https://github.com/googleapis/googleapis/blob/2fd7
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_boot_disk_image="batch-centos"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_boot_disk_image="batch-centos"
+    shell:
         "..."
 ```
 
@@ -319,11 +333,11 @@ The [size of the boot disk](https://github.com/googleapis/googleapis/blob/2fd762
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_boot_disk_gb=40
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_boot_disk_gb=40
+    shell:
         "..."
 ```
 
@@ -333,11 +347,11 @@ This will define the retry times for a step overriding the default from the comm
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_retry_count=2
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_retry_count=2
+    shell:
         "..."
 ```
 
@@ -347,11 +361,11 @@ This will define the max run duration for a step overriding the default from the
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_max_run_duration="3600s"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_max_run_duration="3600s"
+    shell:
         "..."
 ```
 
@@ -361,11 +375,11 @@ This will define the extra labels to add to the Google Batch job.
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_labels="model=c3,stage=test"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_labels="model=c3,stage=test"
+    shell:
         "..."
 ```
 
@@ -376,11 +390,11 @@ A container to use only with `image_family` set to batch-cos* (see [here](https:
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_container="ghcr.io/rse-ops/atacseq:app-latest"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_container="ghcr.io/rse-ops/atacseq:app-latest"
+    shell:
         "..."
 ```
 
@@ -391,10 +405,10 @@ One or more named (or file-derived) snippets to add to setup.
 
 ```console
 rule hello_world:
-	output:
-		"...",
-	resources: 
-		googlebatch_snippets="mpi,myscript.sh"
-	shell:
+    output:
+        "...",
+    resources: 
+        googlebatch_snippets="mpi,myscript.sh"
+    shell:
         "..."
 ```
