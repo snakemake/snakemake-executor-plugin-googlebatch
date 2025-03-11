@@ -56,7 +56,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         """
         Derive default labels for the job (and add custom)
         """
-        labels = {"snakemake-job": job.name}
+        labels = {"snakemake-job": self.fix_job_name(job.name)}
         for contender in self.get_param(job, "labels").split(","):
             if not contender:
                 continue
@@ -93,7 +93,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         Generate a random jobid
         """
         uid = str(uuid.uuid4())
-        return job.name.replace("_", "-") + "-" + uid[0:6]
+        return self.fix_job_name(job.name) + "-" + uid[0:6]
 
     def get_container(self, job, entrypoint=None, commands=None):
         """
@@ -179,6 +179,13 @@ class GoogleBatchExecutor(RemoteExecutor):
             settings=self.workflow.executor_settings,
             resources=job.resources,
         )
+
+    def fix_job_name(self, name):
+        """
+        Replace illegal symbols and fix the job name length to adhere to
+        the Google Batch API job ID and label naming restrictions
+        """
+        return name.replace("_", "-").replace(".", "")[:50]
 
     def run_job(self, job: JobExecutorInterface):
         """
