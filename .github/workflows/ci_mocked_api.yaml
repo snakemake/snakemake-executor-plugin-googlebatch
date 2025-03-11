@@ -83,6 +83,14 @@ jobs:
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
 
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install docker-compose
+
+      - name: Start MinIO service
+        run: docker-compose -f tests/docker-compose.yml up -d
+
       - name: Install MinIO Client CLI
         run: |
           curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
