@@ -83,6 +83,23 @@ jobs:
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
 
+      - name: Install MinIO Client CLI
+        run: |
+          curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
+          chmod +x mc
+          sudo mv mc /usr/local/bin/
+
+      - name: Configure MinIO client
+        run: |
+          mc alias set minio http://localhost:9000 minio minio123
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: "${{ secrets.SNAKEMAKE_AWS_BATCH_REGION }}"
+          role-to-assume: "${{ secrets.GH_AWS_ROLE_ARN }}"
+          role-session-name: "GitHubActions"
+
       # - id: 'auth'
       #   uses: 'google-github-actions/auth@v1'
       #   with:
