@@ -101,21 +101,6 @@ jobs:
         run: |
           mc alias set minio http://localhost:9000 minio minio123
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: "${{ secrets.SNAKEMAKE_AWS_BATCH_REGION }}"
-          role-to-assume: "${{ secrets.GH_AWS_ROLE_ARN }}"
-          role-session-name: "GitHubActions"
-
-      # - id: 'auth'
-      #   uses: 'google-github-actions/auth@v1'
-      #   with:
-      #     credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-      # - name: 'Set up GCloud SDK'
-      #   uses: 'google-github-actions/setup-gcloud@v1'
-
       - name: Run pytest
         run: |
           poetry run coverage run -m pytest tests/tests_mocked_api.py -v
