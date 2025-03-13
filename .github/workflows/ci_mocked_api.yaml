@@ -83,13 +83,23 @@ jobs:
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
 
-      # - id: 'auth'
-      #   uses: 'google-github-actions/auth@v1'
-      #   with:
-      #     credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install docker-compose
 
-      # - name: 'Set up GCloud SDK'
-      #   uses: 'google-github-actions/setup-gcloud@v1'
+      - name: Start MinIO service
+        run: docker-compose -f tests/docker-compose.yml up -d
+
+      - name: Install MinIO Client CLI
+        run: |
+          curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
+          chmod +x mc
+          sudo mv mc /usr/local/bin/
+
+      - name: Configure MinIO client
+        run: |
+          mc alias set minio http://localhost:9000 minio minio123
 
       - name: Run pytest
         run: |
