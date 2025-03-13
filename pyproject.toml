@@ -5,7 +5,7 @@ description = ""
 authors = [
     "Vanessa Sochat <sochat1@llnl.gov>",
     "Johannes Koester <johannes.koester@uni-due.de>",
-    "Tadas Bareikis <tadas@vugene.com>",
+    "Tadas Bareikis <tadas@vugene.com>"
 ]
 readme = "README.md"
 license = "MIT"
