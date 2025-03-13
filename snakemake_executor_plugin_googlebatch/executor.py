@@ -15,6 +15,7 @@ import snakemake_executor_plugin_googlebatch.command as cmdutil
 from google.api_core.exceptions import DeadlineExceeded, ResourceExhausted
 from google.cloud import batch_v1, logging
 
+
 class GoogleBatchExecutor(RemoteExecutor):
     def __post_init__(self):
         # Attach variables for easy access
@@ -541,8 +542,10 @@ class GoogleBatchExecutor(RemoteExecutor):
                 ):
                     logfile.write(log_entry.payload + "\n")
         except ResourceExhausted:
-            self.logger.warning("Too many requests to Google Logging API.\n" +
-                f"Skipping logs for job {job_uid} and sleeping for {sleeps}s.")
+            self.logger.warning(
+                "Too many requests to Google Logging API.\n"
+                + f"Skipping logs for job {job_uid} and sleeping for {sleeps}s."
+            )
             time.sleep(sleeps)
 
             self.logger.warning(f"Trying to retreive logs for job {job_uid} once more.")
@@ -554,8 +557,10 @@ class GoogleBatchExecutor(RemoteExecutor):
                     ):
                         logfile.write(log_entry.payload + "\n")
             except ResourceExhausted:
-                self.logger.warning("Retry to retrieve logs failed, " +
-                    f"the log file {logfname} might be incomplete.")
+                self.logger.warning(
+                    "Retry to retrieve logs failed, "
+                    + f"the log file {logfname} might be incomplete."
+                )
 
     def cancel_jobs(self, active_jobs: List[SubmittedJobInfo]):
         """
