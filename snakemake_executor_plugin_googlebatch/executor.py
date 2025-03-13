@@ -548,7 +548,7 @@ class GoogleBatchExecutor(RemoteExecutor):
             )
             time.sleep(sleeps)
 
-            self.logger.warning(f"Trying to retreive logs for job {job_uid} once more.")
+            self.logger.warning(f"Trying to retrieve logs for job {job_uid} once more.")
             try:
                 with open(logfname, "w", encoding="utf-8") as logfile:
                     for log_entry in logger.list_entries(
