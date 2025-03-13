@@ -540,7 +540,7 @@ class GoogleBatchExecutor(RemoteExecutor):
                     filter_=filter_query,
                     page_size=page_size,
                 ):
-                    logfile.write(log_entry.payload + "\n")
+                    logfile.write(str(log_entry.payload) + "\n")
         except ResourceExhausted:
             self.logger.warning(
                 "Too many requests to Google Logging API.\n"
