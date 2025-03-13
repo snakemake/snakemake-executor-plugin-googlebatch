@@ -83,11 +83,6 @@ jobs:
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
 
-      - name: Set up Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install docker-compose
-
       - name: Setup minio
         uses: comfuture/minio-action@v1
         with:
