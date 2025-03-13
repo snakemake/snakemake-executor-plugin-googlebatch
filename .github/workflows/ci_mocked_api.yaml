@@ -88,8 +88,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install docker-compose
 
-      - name: Start MinIO service
-        run: docker-compose -f tests/docker-compose.yml up -d
+      - name: Setup minio
+        uses: comfuture/minio-action@v1
+        with:
+          access_key: minio
+          secret_key: minio123
+          port: 9000
 
       - name: Install MinIO Client CLI
         run: |
