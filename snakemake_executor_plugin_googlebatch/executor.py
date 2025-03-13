@@ -531,10 +531,6 @@ class GoogleBatchExecutor(RemoteExecutor):
         filter_query = f"labels.job_uid={job_uid}"
         logfname = job_info.aux["logfile"]
 
-        # Handle the test case, when no job_uid is returned
-        if job_uid == "":
-            return
-
         log_client = logging.Client(project=self.executor_settings.project)
         logger = log_client.logger("batch_task_logs")
 

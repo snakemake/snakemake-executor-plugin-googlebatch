@@ -11,7 +11,7 @@ class TestWorkflowsMockedApi(TestWorkflowsBase):
     @patch(
         "google.cloud.batch_v1.BatchServiceClient.create_job",
         new=MagicMock(
-            return_value=Job(name="foo"),
+            return_value=Job(name="foo", uid="bar"),
             autospec=True,
         ),
     )
@@ -19,6 +19,13 @@ class TestWorkflowsMockedApi(TestWorkflowsBase):
         "google.cloud.batch_v1.BatchServiceClient.get_job",
         new=MagicMock(
             return_value=Job(status=JobStatus(state=JobStatus.State.SUCCEEDED)),
+            autospec=True,
+        ),
+    )
+    @patch(
+        "google.cloud.logging.Client.logger",
+        new=MagicMock(
+            return_value=MagicMock(list_entries=lambda filter_, page_size: []),
             autospec=True,
         ),
     )
