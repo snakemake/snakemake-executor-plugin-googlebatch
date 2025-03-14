@@ -90,11 +90,6 @@ jobs:
           secret_key: minio123
           port: 9000
 
-
-      - name: Configure MinIO client
-        run: |
-          mc alias set minio http://localhost:9000 minio minio123
-
       - name: Run pytest
         run: |
           poetry run coverage run -m pytest tests/tests_mocked_api.py -v
