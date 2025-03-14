@@ -90,16 +90,6 @@ jobs:
           secret_key: minio123
           port: 9000
 
-      - name: Install MinIO Client CLI
-        run: |
-          curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
-          chmod +x mc
-          sudo mv mc /usr/local/bin/
-
-      - name: Configure MinIO client
-        run: |
-          mc alias set minio http://localhost:9000 minio minio123
-
       - name: Run pytest
         run: |
           poetry run coverage run -m pytest tests/tests_mocked_api.py -v
