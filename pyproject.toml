@@ -4,7 +4,8 @@ version = "0.5.0"
 description = ""
 authors = [
     "Vanessa Sochat <sochat1@llnl.gov>",
-    "Johannes Koester <johannes.koester@uni-due.de>"
+    "Johannes Koester <johannes.koester@uni-due.de>",
+    "Tadas Bareikis <tadas@vugene.com>"
 ]
 readme = "README.md"
 license = "MIT"

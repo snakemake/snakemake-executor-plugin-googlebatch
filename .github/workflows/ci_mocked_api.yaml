@@ -83,13 +83,12 @@ jobs:
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
 
-      # - id: 'auth'
-      #   uses: 'google-github-actions/auth@v1'
-      #   with:
-      #     credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-      # - name: 'Set up GCloud SDK'
-      #   uses: 'google-github-actions/setup-gcloud@v1'
+      - name: Setup minio
+        uses: comfuture/minio-action@v1
+        with:
+          access_key: minio
+          secret_key: minio123
+          port: 9000
 
       - name: Run pytest
         run: |
