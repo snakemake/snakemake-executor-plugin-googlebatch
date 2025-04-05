@@ -560,7 +560,9 @@ class GoogleBatchExecutor(RemoteExecutor):
             )
             time.sleep(sleeps)
 
-            self.logger.warning(f"Trying to retrieve logs for job {job_uid} once more.")
+            self.logger.warning(
+                f"Trying to retrieve logs for Batch job {job_uid} once more."
+            )
             try:
                 attempt_log_save(logfname, filter_query, page_size)
             except ResourceExhausted:
@@ -568,6 +570,10 @@ class GoogleBatchExecutor(RemoteExecutor):
                     "Retry to retrieve logs failed, "
                     + f"the log file {logfname} might be incomplete."
                 )
+        except Exception as e:
+            self.logger.warning(
+                f"Failed to retrieve logs for Batch job {job_uid}: {str(e)}"
+            )
 
     def cancel_jobs(self, active_jobs: List[SubmittedJobInfo]):
         """
