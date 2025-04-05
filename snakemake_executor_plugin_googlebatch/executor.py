@@ -541,13 +541,18 @@ class GoogleBatchExecutor(RemoteExecutor):
         log_client = logging.Client(project=self.executor_settings.project)
         logger = log_client.logger("batch_task_logs")
 
-        try:
-            with open(logfname, "w", encoding="utf-8") as logfile:
+        def attempt_log_save(fname, query, page_size):
+            with open(fname, "w", encoding="utf-8") as logfile:
                 for log_entry in logger.list_entries(
-                    filter_=filter_query,
+                    filter_=query,
                     page_size=page_size,
                 ):
                     logfile.write(str(log_entry.payload) + "\n")
+
+        self.logger.info(f"Saving logs for Batch job {job_uid} to {logfname}.")
+
+        try:
+            attempt_log_save(logfname, filter_query, page_size)
         except ResourceExhausted:
             self.logger.warning(
                 "Too many requests to Google Logging API.\n"
@@ -557,12 +562,7 @@ class GoogleBatchExecutor(RemoteExecutor):
 
             self.logger.warning(f"Trying to retrieve logs for job {job_uid} once more.")
             try:
-                with open(logfname, "w", encoding="utf-8") as logfile:
-                    for log_entry in logger.list_entries(
-                        filter_=filter_query,
-                        page_size=page_size,
-                    ):
-                        logfile.write(str(log_entry.payload) + "\n")
+                attempt_log_save(logfname, filter_query, page_size)
             except ResourceExhausted:
                 self.logger.warning(
                     "Retry to retrieve logs failed, "
