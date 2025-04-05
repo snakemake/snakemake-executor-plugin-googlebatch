@@ -541,7 +541,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         log_client = logging.Client(project=self.executor_settings.project)
         logger = log_client.logger("batch_task_logs")
 
-        def attempt_log_save(fname, query, page_size):
+        def attempt_log_save(fname, logger, query, page_size):
             with open(fname, "w", encoding="utf-8") as logfile:
                 for log_entry in logger.list_entries(
                     filter_=query,
