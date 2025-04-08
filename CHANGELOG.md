@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.5.0...v0.5.1) (2025-04-08)
+
+
+### Bug Fixes
+
+* Add log retrieval after job finalization ([#61](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/61)) ([c273f29](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/c273f292963b6eb6db528f139df201eca4fd282e))
+* batch job ID and label prior to submission ([#59](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/issues/59)) ([3a37591](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/commit/3a3759109d98f344caebd93ddfa6ff8ac39e3437))
+
 ## [0.5.0](https://github.com/snakemake/snakemake-executor-plugin-googlebatch/compare/v0.4.0...v0.5.0) (2024-08-14)
 
 
