@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 
 from typing import List
@@ -11,8 +12,8 @@ from snakemake_interface_executor_plugins.jobs import (
 import snakemake_executor_plugin_googlebatch.utils as utils
 import snakemake_executor_plugin_googlebatch.command as cmdutil
 
-from google.api_core.exceptions import DeadlineExceeded
-from google.cloud import batch_v1
+from google.api_core.exceptions import DeadlineExceeded, ResourceExhausted
+from google.cloud import batch_v1, logging
 
 
 class GoogleBatchExecutor(RemoteExecutor):
@@ -508,6 +509,9 @@ class GoogleBatchExecutor(RemoteExecutor):
             # SUCCEEDED
             # FAILED
             # DELETION_IN_PROGRESS
+            if response.status.state.name in ["FAILED", "SUCCEEDED"]:
+                self.save_finished_job_logs(j)
+
             if response.status.state.name == "FAILED":
                 msg = f"Google Batch job '{j.external_jobid}' failed. "
                 self.report_job_error(j, msg=msg, aux_logs=aux_logs)
@@ -519,9 +523,61 @@ class GoogleBatchExecutor(RemoteExecutor):
             else:
                 yield j
 
+    def save_finished_job_logs(
+        self,
+        job_info: SubmittedJobInfo,
+        sleeps=60,
+        page_size=1000,
+    ):
+        """
+        Download logs using Google Cloud Logging API and save
+        them locally. Since tail logging does not work, this function
+        is run only at the end of the job.
+        """
+        job_uid = job_info.aux["batch_job"].uid
+        filter_query = f"labels.job_uid={job_uid}"
+        logfname = job_info.aux["logfile"]
+
+        log_client = logging.Client(project=self.executor_settings.project)
+        logger = log_client.logger("batch_task_logs")
+
+        def attempt_log_save(fname, logger, query, page_size):
+            with open(fname, "w", encoding="utf-8") as logfile:
+                for log_entry in logger.list_entries(
+                    filter_=query,
+                    page_size=page_size,
+                ):
+                    logfile.write(str(log_entry.payload) + "\n")
+
+        self.logger.info(f"Saving logs for Batch job {job_uid} to {logfname}.")
+
+        try:
+            attempt_log_save(logfname, logger, filter_query, page_size)
+        except ResourceExhausted:
+            self.logger.warning(
+                "Too many requests to Google Logging API.\n"
+                + f"Skipping logs for job {job_uid} and sleeping for {sleeps}s."
+            )
+            time.sleep(sleeps)
+
+            self.logger.warning(
+                f"Trying to retrieve logs for Batch job {job_uid} once more."
+            )
+            try:
+                attempt_log_save(logfname, logger, filter_query, page_size)
+            except ResourceExhausted:
+                self.logger.warning(
+                    "Retry to retrieve logs failed, "
+                    + f"the log file {logfname} might be incomplete."
+                )
+        except Exception as e:
+            self.logger.warning(
+                f"Failed to retrieve logs for Batch job {job_uid}: {str(e)}"
+            )
+
     def cancel_jobs(self, active_jobs: List[SubmittedJobInfo]):
         """
-        cancel all active jobs. This method is called when snakemake is interrupted.
+        Cancel all active jobs. This method is called when snakemake is interrupted.
         """
         for job in active_jobs:
             jobid = job.external_jobid

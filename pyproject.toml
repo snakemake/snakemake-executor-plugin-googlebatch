@@ -22,15 +22,15 @@ google-cloud-storage = "^2.12.0"
 snakemake-interface-common = "^1.14.0"
 snakemake-interface-executor-plugins = "^9.0.0"
 jinja2 = "^3.1.2"
-google-cloud-logging = "^3.8.0"
+google-cloud-logging = "^3.11.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.0"
 flake8 = "^6.1.0"
 coverage = "^7.3.1"
 pytest = "^7.4.2"
-snakemake = "^8.18.0"
-snakemake-storage-plugin-s3 = "^0.2.10"
+snakemake = "^8.30.0"
+snakemake-storage-plugin-s3 = "^0.3.1"
 
 [tool.coverage.run]
 omit = [".*", "*/site-packages/*", "Snakefile"]
