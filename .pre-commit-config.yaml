@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.12.7
+    hooks:
+      - args: [--fix, --exit-non-zero-on-fix]
+        id: ruff-check
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.17.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-protobuf>=5,<6
+          - types-cachetools
+          - numpy
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+        args:
+          - "-shellcheck="
+          - "-ignore"
+          - 'input "attestations" is not defined in action'
+          - "-ignore"
+          - '"github.head_ref" is potentially untrusted'
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.5.0
+    hooks:
+      - id: pycln

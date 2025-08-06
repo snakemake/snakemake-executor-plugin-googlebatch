@@ -1,19 +1,20 @@
 import os
+import shlex
 import time
 import uuid
 
-from typing import List
+from google.api_core.exceptions import DeadlineExceeded, ResourceExhausted
+from google.cloud import batch_v1, logging
 from snakemake_interface_common.exceptions import WorkflowError
 from snakemake_interface_executor_plugins.executors.base import SubmittedJobInfo
 from snakemake_interface_executor_plugins.executors.remote import RemoteExecutor
 from snakemake_interface_executor_plugins.jobs import (
     JobExecutorInterface,
 )
-import snakemake_executor_plugin_googlebatch.utils as utils
-import snakemake_executor_plugin_googlebatch.command as cmdutil
+from snakemake_interface_executor_plugins.utils import format_cli_arg, join_cli_args
 
-from google.api_core.exceptions import DeadlineExceeded, ResourceExhausted
-from google.cloud import batch_v1, logging
+import snakemake_executor_plugin_googlebatch.command as cmdutil
+import snakemake_executor_plugin_googlebatch.utils as utils
 
 
 class GoogleBatchExecutor(RemoteExecutor):
@@ -24,8 +25,9 @@ class GoogleBatchExecutor(RemoteExecutor):
         # There is an async client but I'm not sure we'd get much benefit
         try:
             self.batch = batch_v1.BatchServiceClient()
+            self.logger.info("Successfully connected to Google Batch.")
         except Exception as e:
-            raise WorkflowError("Unable to connect to Google Batch.", e)
+            raise WorkflowError("Unable to connect to Google Batch.") from e
 
     def get_param(self, job, param):
         """
@@ -51,6 +53,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         cpu_milli = self.get_param(job, "cpu_milli")
         resources.cpu_milli = cpu_milli
         resources.memory_mib = memory
+        self.logger.debug(f"Task resources: cpu_milli={cpu_milli}, memory_mib={memory}")
         return resources
 
     def get_labels(self, job):
@@ -66,6 +69,7 @@ class GoogleBatchExecutor(RemoteExecutor):
                 continue
             key, value = contender.split("=", 1)
             labels[key] = value
+        self.logger.debug(f"Job labels: {labels}")
         return labels
 
     def get_envvar_declarations(self):
@@ -80,13 +84,17 @@ class GoogleBatchExecutor(RemoteExecutor):
         """
         bucket = self.get_param(job, "bucket")
         if not bucket:
+            self.logger.debug("No bucket provided, skipping storage.")
             return
 
+        self.logger.debug(f"Adding storage for bucket {bucket}.")
         gcs_bucket = batch_v1.GCS()
         gcs_bucket.remote_path = bucket
         gcs_volume = batch_v1.Volume()
         gcs_volume.gcs = gcs_bucket
-        gcs_volume.mount_path = self.get_param(job, "mount_path")
+        mount_path = self.get_param(job, "mount_path")
+        gcs_volume.mount_path = mount_path
+        self.logger.debug(f"Mounting bucket {bucket} to {mount_path}.")
         task.volumes = [gcs_volume]
 
     def generate_jobid(self, job):
@@ -96,35 +104,93 @@ class GoogleBatchExecutor(RemoteExecutor):
         uid = str(uuid.uuid4())
         return self.fix_job_name(job.name) + "-" + uid[0:6]
 
-    def get_container(self, job, entrypoint=None, commands=None):
+    def get_job_args(self, job):
+        return super().get_job_args(job)
+
+    def format_job_exec(self, job: JobExecutorInterface) -> str:
+        """Overrides RealExecutor.format_job_exec for containers, removing unwanted args"""
+
+        if not self.is_container_job(job):
+            # Use the normal one
+            self.logger.info("using default job exec")
+            return super().format_job_exec(job)
+
+        self.logger.info("using container-specific job exec")
+
+        suffix = self.get_job_exec_suffix(job)
+        if suffix:
+            suffix = f"&& {suffix}"
+        general_args = self.workflow.spawned_job_args_factory.general_args(
+            executor_common_settings=self.common_settings
+        )
+
+        # Disable installation
+        self.common_settings.auto_deploy_default_storage_provider = False
+        precommand = self.workflow.spawned_job_args_factory.precommand(
+            executor_common_settings=self.common_settings
+        )
+        if precommand:
+            precommand += " &&"
+
+        args = join_cli_args(
+            [
+                self.get_envvar_declarations(),
+                precommand,
+                self.get_python_executable(),
+                "-m snakemake",
+                format_cli_arg("--snakefile", self.get_snakefile()),
+                self.get_job_args(job),
+                general_args,
+                self.additional_general_args(),
+                format_cli_arg("--mode", self.get_exec_mode().item_to_choice()),
+                format_cli_arg(
+                    "--local-groupid",
+                    self.workflow.group_settings.local_groupid,
+                    skip=self.job_specific_local_groupid,
+                ),
+                suffix,
+            ]
+        )
+        return args
+
+    def get_container(self, job, entrypoint=None):
         """
         Get a container, if batch-cos is defined.
         """
-        family = self.get_param(job, "image_family")
-        if "batch-cos" not in family:
-            return
+        if not self.is_container_job(job):
+            self.logger.info("Not using a container for this job.")
+            return None
+
+        self.logger.info("Using a container for this job.")
 
         # Default entrypoint assumes the setup wrote our command here
         if entrypoint is None:
             entrypoint = "/bin/bash"
-        if commands is None:
-            commands = ["/tmp/workdir/entrypoint.sh"]
+
+        commands = self.format_job_exec(job)
+        self.logger.debug(f"Executing job: {commands}")
 
         # We use the default snakemake image or the container, but also
         # honor a googlebatch_container in case it is distinct
         image = self.workflow.remote_execution_settings.container_image
         image = self.get_param(job, "container") or image
+
+        if image != self.workflow.remote_execution_settings.container_image:
+            self.logger.debug(f"Using custom container image {image}.")
         container = batch_v1.Runnable.Container()
         container.image_uri = image
 
         # This is written by writer.setup() for COS
         container.entrypoint = entrypoint
-        container.commands = commands
+        if self.get_param(job, "split_commands"):
+            container.commands = shlex.split(commands)
+        else:
+            container.commands = [commands]
 
         # This will ensure the Snakefile is in the PWD of the COS container
         container.volumes = ["/tmp/workdir:/tmp/workdir"]
         container.options = (
-            "--network host --workdir /tmp/workdir -e PYTHONUNBUFFERED=1"
+            "--network host --user 0 --workdir /tmp/workdir -e PYTHONUNBUFFERED=1"
         )
 
         username = self.get_param(job, "docker_username")
@@ -145,6 +211,11 @@ class GoogleBatchExecutor(RemoteExecutor):
         # enable_image_streaming true
         return container
 
+    def is_container_job(self, job: JobExecutorInterface) -> bool:
+        """Determine if a job is a container job based on image family."""
+        family = self.get_param(job, "image_family")
+        return "batch-cos" in family
+
     def is_preemptible(self, job):
         """
         Determine if a job is preemptible.
@@ -156,6 +227,7 @@ class GoogleBatchExecutor(RemoteExecutor):
             preemptible = all(is_p(rule) for rule in job.rules)
         else:
             preemptible = is_p(job.rule.name)
+        self.logger.info(f"Is this job pre-emptible: {preemptible}")
         return preemptible
 
     def get_command_writer(self, job):
@@ -163,6 +235,8 @@ class GoogleBatchExecutor(RemoteExecutor):
         Get a command writer for a job.
         """
         family = self.get_param(job, "image_family")
+        writer = cmdutil.get_writer(family)
+        self.logger.debug(f"Using command writer {writer} for family: {family}")
         command = self.format_job_exec(job)
         snakefile = self.read_snakefile()
 
@@ -170,9 +244,10 @@ class GoogleBatchExecutor(RemoteExecutor):
         snippets = self.get_param(job, "snippets")
 
         snakefile_path = "./Snakefile"
-        if "batch-cos" in family:
+        if self.is_container_job(job):
             snakefile_path = "/tmp/workdir/Snakefile"
-        return cmdutil.get_writer(family)(
+
+        return writer(
             command=command,
             snakefile=snakefile,
             snippets=snippets,
@@ -205,11 +280,13 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # The command writer prepares the final command, snippets, etc.
         writer = self.get_command_writer(job)
+        self.logger.info(f"using writer: {type(writer)}")
+
+        use_container = self.get_container(job, self.get_param(job, "entrypoint"))
 
         # Setup command
         setup_command = writer.setup()
         self.logger.info("\n🌟️ Setup Command:")
-        print(setup_command)
 
         # Add environment variables to the task
         envars = self.workflow.spawned_job_args_factory.envvars()
@@ -218,15 +295,14 @@ class GoogleBatchExecutor(RemoteExecutor):
         runnable = batch_v1.Runnable()
 
         # If we have a container, add it - the script isn't used
-        container = self.get_container(job)
-        if container is not None:
-            runnable.container = container
+        if use_container:
+            self.logger.info(f"container: {use_container}")
+            runnable.container = use_container
             snakefile_text = writer.write_snakefile()
         else:
             # Run command (not used for COS)
             run_command = writer.run()
             self.logger.info("\n🐍️ Snakemake Command:")
-            print(run_command)
 
             runnable.script = batch_v1.Runnable.Script()
             runnable.script.text = run_command
@@ -253,13 +329,16 @@ class GoogleBatchExecutor(RemoteExecutor):
         barrier = batch_v1.Runnable()
         barrier.barrier = batch_v1.Runnable.Barrier()
         barrier.barrier.name = "wait-for-setup"
-        task.runnables = [setup, snakefile_step, barrier, runnable]
+        task.runnables = [setup, snakefile_step]
+
+        task.runnables.extend([barrier, runnable])
 
         # Are we adding storage?
         self.add_storage(job, task)
 
         # We can specify what resources are requested by each task.
         task.compute_resource = self.get_task_resources(job)
+        self.logger.debug(f"Task spec: {task}")
 
         # Tasks are grouped inside a job using TaskGroups.
         # Currently, it's possible to have only one task group.
@@ -298,7 +377,6 @@ class GoogleBatchExecutor(RemoteExecutor):
         # The job's parent is the region in which the job will run
         create_request.parent = self.project_parent(job)
         createdjob = self.batch.create_job(create_request)
-        print(createdjob)
 
         # Save aux metadata
         # Last seen will hold the timestamp of last recorded status
@@ -329,6 +407,10 @@ class GoogleBatchExecutor(RemoteExecutor):
         family = self.get_param(job, "image_family")
         project = self.get_param(job, "image_project")
 
+        self.logger.info(
+            f"Requesting machine_type {machine_type} with image family {family}"
+        )
+
         # Disks is how we specify the image we want (we need centos to get MPI working)
         # This could also be batch-centos, batch-debian, batch-cos
         # but MPI won't work on all of those
@@ -342,9 +424,10 @@ class GoogleBatchExecutor(RemoteExecutor):
         policy.boot_disk = boot_disk
 
         # Do we want preemptible?
-        # https://github.com/googleapis/googleapis/blob/master/google/cloud/batch/v1/job.proto#L479 and  # noqa
-        # https://github.com/googleapis/google-cloud-python/blob/main/packages/google-cloud-batch/google/cloud/batch_v1/types/job.py#L672  # noqa
+        # https://github.com/googleapis/googleapis/blob/master/google/cloud/batch/v1/job.proto#L479 and
+        # https://github.com/googleapis/google-cloud-python/blob/main/packages/google-cloud-batch/google/cloud/batch_v1/types/job.py#L672
         if self.is_preemptible(job):
+            self.logger.debug("Using preemptible instance.")
             policy.provisioning_model = 3
 
         instances = batch_v1.AllocationPolicy.InstancePolicyOrTemplate()
@@ -465,14 +548,17 @@ class GoogleBatchExecutor(RemoteExecutor):
         assert os.path.exists(self.workflow.main_snakefile)
         return utils.read_file(self.workflow.main_snakefile)
 
-    def get_snakefile(self):
+    def get_snakefile(self, job: JobExecutorInterface | None = None):
         """
         Use a Snakefile in the present working directory since we write it.
         """
+        if job and self.is_container_job(job):
+            return "/tmp/workdir/Snakefile"
+
         assert os.path.exists(self.workflow.main_snakefile)
         return os.path.relpath(self.workflow.main_snakefile, os.getcwd())
 
-    async def check_active_jobs(self, active_jobs: List[SubmittedJobInfo]):
+    async def check_active_jobs(self, active_jobs: list[SubmittedJobInfo]):
         """
         Check the status of active jobs.
         """
@@ -572,10 +658,10 @@ class GoogleBatchExecutor(RemoteExecutor):
                 )
         except Exception as e:
             self.logger.warning(
-                f"Failed to retrieve logs for Batch job {job_uid}: {str(e)}"
+                f"Failed to retrieve logs for Batch job {job_uid}: {e!s}"
             )
 
-    def cancel_jobs(self, active_jobs: List[SubmittedJobInfo]):
+    def cancel_jobs(self, active_jobs: list[SubmittedJobInfo]):
         """
         Cancel all active jobs. This method is called when snakemake is interrupted.
         """

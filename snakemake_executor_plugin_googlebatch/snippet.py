@@ -1,9 +1,10 @@
 # Snippets to provide to the command writer
 
-from snakemake_interface_common.exceptions import WorkflowError
-import jinja2
 import os
 import re
+
+import jinja2
+from snakemake_interface_common.exceptions import WorkflowError
 
 # Registered (known) snippets to the plugin here
 #            family: regular expression to validate family (if applicable)
@@ -68,7 +69,7 @@ class SnippetGroup:
         Load a spec for one or more snippets.
         """
         spec = spec or ""
-        self.spec = set([x.strip() for x in spec.strip().split(",") if x.strip()])
+        self.spec = {x.strip() for x in spec.strip().split(",") if x.strip()}
 
     def validate(self):
         """

@@ -5,15 +5,23 @@ instead of on a native virtual machine. This also means using the default Snakem
 
 ```bash
 gcloud compute images list \
-    --project=batch-custom-image \
-    --no-standard-images
+      --project=batch-custom-image \
+      --no-standard-images
 ```
 
 Here is an example command:
 
 ```bash
 GOOGLE_PROJECT=myproject
-snakemake --jobs 1 --executor googlebatch --googlebatch-image-family batch-cos-stable-official --googlebatch-region us-central1 --googlebatch-image-project batch-custom-image --googlebatch-project ${GOOGLE_PROJECT} --default-storage-provider s3 --default-storage-prefix s3://my-snakemake-testing
+snakemake \
+  --jobs 1 \
+  --executor googlebatch \
+  --googlebatch-image-family batch-cos-stable-official \
+  --googlebatch-region us-central1 \
+  --googlebatch-image-project batch-custom-image \
+  --googlebatch-project ${GOOGLE_PROJECT} \
+  --default-storage-provider s3 \
+  --default-storage-prefix s3://my-snakemake-testing
 ```
 
 See [this link](https://cloud.google.com/batch/docs/vm-os-environment-overview#supported_vm_os_images) for how to find a compatible COS image project and family.
