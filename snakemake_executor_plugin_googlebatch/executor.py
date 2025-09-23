@@ -104,11 +104,12 @@ class GoogleBatchExecutor(RemoteExecutor):
         uid = str(uuid.uuid4())
         return self.fix_job_name(job.name) + "-" + uid[0:6]
 
-    def get_job_args(self, job):
-        return super().get_job_args(job)
-
     def format_job_exec(self, job: JobExecutorInterface) -> str:
-        """Overrides RealExecutor.format_job_exec for containers, removing unwanted args"""
+        """Overrides RealExecutor.format_job_exec for containers.
+
+        RealExecutor add a command prefix which changes directory, which we don't want.
+        It also tries to install snakemake, whereas this assumes that snakemake is already installed.
+        """
 
         if not self.is_container_job(job):
             # Use the normal one
@@ -190,6 +191,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         # This will ensure the Snakefile is in the PWD of the COS container
         container.volumes = ["/tmp/workdir:/tmp/workdir"]
         container.options = (
+            # Run as root to avoid permissions issues with mounted buckets/paths
             "--network host --user 0 --workdir /tmp/workdir -e PYTHONUNBUFFERED=1"
         )
 
@@ -286,7 +288,7 @@ class GoogleBatchExecutor(RemoteExecutor):
 
         # Setup command
         setup_command = writer.setup()
-        self.logger.info("\n🌟️ Setup Command:")
+        self.logger.info(f"\n🌟️ Setup Command: {setup_command}")
 
         # Add environment variables to the task
         envars = self.workflow.spawned_job_args_factory.envvars()
@@ -377,6 +379,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         # The job's parent is the region in which the job will run
         create_request.parent = self.project_parent(job)
         createdjob = self.batch.create_job(create_request)
+        self.logger.info(f"Created job: {createdjob}")
 
         # Save aux metadata
         # Last seen will hold the timestamp of last recorded status

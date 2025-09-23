@@ -260,7 +260,7 @@ class ExecutorSettings(ExecutorSettingsBase):
     bucket: Optional[str] = field(
         default=None,
         metadata={
-            "help": "Bucket to mount.",
+            "help": "Bucket to mount at mount_path.",
             "env_var": False,
             "required": False,
         },

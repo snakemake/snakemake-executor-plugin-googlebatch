@@ -75,10 +75,11 @@ disable_error_code = "import-untyped,return"
 target-version = "py311"
 
 exclude = [ "example/*" ]
+line-length = 88
 
 [tool.ruff.lint]
 ignore = [
-    "E501", # line length
+    "E203","E261","E501"
 ]
 select = ["E", "F", "B", "W", "I", "C4", "ICN", "T20", "PLE", "RUF"]
 
