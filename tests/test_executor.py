@@ -11,7 +11,10 @@ from snakemake.jobs import Job
 from snakemake_interface_executor_plugins.executors.base import SubmittedJobInfo
 
 from snakemake_executor_plugin_googlebatch import ExecutorSettings
-from snakemake_executor_plugin_googlebatch.executor import GoogleBatchExecutor
+from snakemake_executor_plugin_googlebatch.executor import (
+    GoogleBatchExecutor,
+    RemoteExecutor,
+)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -158,6 +161,28 @@ class TestGoogleBatchExecutor:
         }
         parent = executor.project_parent(job)
         assert parent == "projects/my-project/locations/us-west1"
+
+    def test_format_job_exec_with_container_dependencies_installed(self, executor, job):
+        # Case 1: Container job and dependencies installed - should use custom exec
+        executor.workflow.executor_settings.container_dependencies_installed = True
+        job.resources = {"googlebatch_image_family": "batch-cos-stable"}
+        with patch.object(RemoteExecutor, "format_job_exec") as mock_super_format:
+            executor.format_job_exec(job)
+            mock_super_format.assert_not_called()
+
+        # Case 2: Container job and dependencies NOT installed - should use super()
+        executor.workflow.executor_settings.container_dependencies_installed = False
+        job.resources = {"googlebatch_image_family": "batch-cos-stable"}
+        with patch.object(RemoteExecutor, "format_job_exec") as mock_super_format:
+            executor.format_job_exec(job)
+            mock_super_format.assert_called_once_with(job)
+
+        # Case 3: Not a container job - should always use super()
+        executor.workflow.executor_settings.container_dependencies_installed = True
+        job.resources = {"googlebatch_image_family": "batch-centos"}
+        with patch.object(RemoteExecutor, "format_job_exec") as mock_super_format:
+            executor.format_job_exec(job)
+            mock_super_format.assert_called_once_with(job)
 
     @patch("snakemake_executor_plugin_googlebatch.executor.cmdutil.get_writer")
     def test_get_command_writer(self, mock_get_writer, executor, job):

@@ -50,6 +50,15 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
+    container_dependencies_installed: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "If set to True, do not install snakemake or any dependencies. Google batch runs will drop into the envtrypoint and run commands assuming that snakemake and all dependencies are available and set up on the path.",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
     docker_password: Optional[str] = field(
         default=None,
         metadata={

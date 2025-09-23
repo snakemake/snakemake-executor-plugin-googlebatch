@@ -107,13 +107,16 @@ class GoogleBatchExecutor(RemoteExecutor):
     def format_job_exec(self, job: JobExecutorInterface) -> str:
         """Overrides RealExecutor.format_job_exec for containers.
 
-        RealExecutor add a command prefix which changes directory, which we don't want.
-        It also tries to install snakemake, whereas this assumes that snakemake is already installed.
+        RealExecutor add a command prefix which changes directory, and it also tries to install snakemake.
+        If a user has a custom image with dependencies already installed, neither of these need doing, so
+        that setup step is skipped.
         """
 
-        if not self.is_container_job(job):
-            # Use the normal one
-            self.logger.info("using default job exec")
+        if not (
+            self.is_container_job(job)
+            and self.get_param(job, "container_dependencies_installed")
+        ):
+            self.logger.debug("using default job exec")
             return super().format_job_exec(job)
 
         self.logger.info("using container-specific job exec")
