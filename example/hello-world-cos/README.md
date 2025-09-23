@@ -25,6 +25,7 @@ rule interpolated_flat_fluvial:
         googlebatch_entrypoint="/docker-entrypoint.sh",
         googlebatch_machine_type="e2-standard-4",
         googlebatch_container="europe-docker.pkg.dev/myproject/my_image_name:latest",
+        googlebatch_container_dependencies_installed=True,
         googlebatch_work_tasks=1,
         googlebatch_work_tasks_per_node=2,
     script:
