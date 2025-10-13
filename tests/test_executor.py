@@ -1,12 +1,16 @@
 import asyncio
 import logging
 import tempfile
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 import snakemake
 from google.cloud import batch_v1
-from google.cloud.batch_v1.types import job as gcp_job
+from google.cloud.batch_v1.types import (
+    Job as GCPJob,
+    JobStatus as GCPJobStatus,
+    job as gcp_job,
+)
 from snakemake.jobs import Job
 from snakemake_interface_executor_plugins.executors.base import SubmittedJobInfo
 
@@ -15,6 +19,7 @@ from snakemake_executor_plugin_googlebatch.executor import (
     GoogleBatchExecutor,
     RemoteExecutor,
 )
+from tests import TestWorkflowsBase
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -351,3 +356,36 @@ class TestGoogleBatchExecutor:
         executor.cancel_jobs([submitted_job])
 
         executor.batch.delete_job.assert_called_once()
+
+
+class TestWorkflowsWithMockedApi(TestWorkflowsBase):
+    __test__ = True
+
+    @patch("snakemake.jobs.wait_for_files", new=AsyncMock(autospec=True))
+    @patch(
+        "snakemake_storage_plugin_s3.StorageObject.managed_size",
+        new=AsyncMock(autospec=True, return_value=0),
+    )
+    @patch("snakemake.dag.DAG.check_and_touch_output", new=AsyncMock(autospec=True))
+    @patch("snakemake_executor_plugin_googlebatch.executor.logging.Client")
+    @patch(
+        "snakemake_executor_plugin_googlebatch.executor.batch_v1.BatchServiceClient",
+        spec=batch_v1.BatchServiceClient,
+        get_job=MagicMock(
+            return_value=GCPJob(
+                status=GCPJobStatus(state=GCPJobStatus.State.SUCCEEDED)
+            ),
+            autospec=True,
+        ),
+        create_job=MagicMock(
+            return_value=GCPJob(name="foo", uid="bar"),
+            autospec=True,
+        ),
+    )
+    def run_workflow(
+        self,
+        *args,
+        **kwargs,
+    ):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            super().run_workflow("simple", tmpdir)

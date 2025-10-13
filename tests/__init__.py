@@ -1,5 +1,4 @@
 import os
-from fractions import Fraction
 
 import snakemake.common.tests
 import snakemake.settings.types
@@ -32,7 +31,10 @@ class TestWorkflowsBase(snakemake.common.tests.TestWorkflowsMinioPlayStorageBase
         self,
     ) -> snakemake.settings.types.RemoteExecutionSettings:
         return snakemake.settings.types.RemoteExecutionSettings(
-            seconds_between_status_checks=10,
+            seconds_between_status_checks=1,
             envvars=self.get_envvars(),
-            max_status_checks_frac=Fraction("1/2"),
         )
+
+    @property
+    def endpoint_url(self):
+        return os.getenv("SNAKEMAKE_GOOGLEBATCH_S3_ENDPOINT_URL", super().endpoint_url)
