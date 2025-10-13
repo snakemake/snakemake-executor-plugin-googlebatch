@@ -232,7 +232,7 @@ class GoogleBatchExecutor(RemoteExecutor):
             preemptible = all(is_p(rule) for rule in job.rules)
         else:
             preemptible = is_p(job.rule.name)
-        self.logger.info(f"Is this job pre-emptible: {preemptible}")
+        self.logger.info(f"pre-emptible rules: {preemptible}")
         return preemptible
 
     def get_command_writer(self, job):
@@ -334,9 +334,7 @@ class GoogleBatchExecutor(RemoteExecutor):
         barrier = batch_v1.Runnable()
         barrier.barrier = batch_v1.Runnable.Barrier()
         barrier.barrier.name = "wait-for-setup"
-        task.runnables = [setup, snakefile_step]
-
-        task.runnables.extend([barrier, runnable])
+        task.runnables = [setup, snakefile_step, barrier, runnable]
 
         # Are we adding storage?
         self.add_storage(job, task)
