@@ -38,4 +38,6 @@ jobs:
         env:
           PYPI_USERNAME: __token__
           PYPI_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: flit publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD
+        run: |
+          uv build
+          uv publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD
