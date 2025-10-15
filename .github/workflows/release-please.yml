@@ -40,4 +40,4 @@ jobs:
           PYPI_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           uv build
-          uv publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD
+          uv publish --build --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"

@@ -55,5 +55,4 @@ See the [Dockerfile](./Dockerfile) and [entrypoint script](./docker-entrypoint.s
 build an image with all dependencies installed.
 
 See [this link](https://cloud.google.com/batch/docs/vm-os-environment-overview#supported_vm_os_images) for how to find a
-compatible COS image project and family. You can also see
-information [here](https://cloud.google.com/batch/docs/view-os-images),
+compatible COS image project and family. You can also see [OS images documentation](https://cloud.google.com/batch/docs/view-os-images),

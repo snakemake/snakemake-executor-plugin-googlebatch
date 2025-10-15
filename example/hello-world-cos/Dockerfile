@@ -25,6 +25,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Create mount path used by gcsfuse to mount data
 RUN mkdir -p /mnt/ && chown mambauser:mambauser /mnt/ && chmod g+w /mnt/
+
+# Create and set permissions for the share directory
+RUN mkdir -p /mnt/share && chown mambauser:mambauser /mnt/share && chmod g+w /mnt/share
 VOLUME /mnt/share
 
 # Back to non-root to install dependencies
