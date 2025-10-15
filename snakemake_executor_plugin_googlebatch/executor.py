@@ -218,7 +218,7 @@ class GoogleBatchExecutor(RemoteExecutor):
 
     def is_container_job(self, job: JobExecutorInterface) -> bool:
         """Determine if a job is a container job based on image family."""
-        family = self.get_param(job, "image_family")
+        family = self.get_param(job, "image_family") or ""
         return "batch-cos" in family
 
     def is_preemptible(self, job):
