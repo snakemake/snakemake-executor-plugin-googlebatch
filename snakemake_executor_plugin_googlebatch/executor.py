@@ -142,7 +142,7 @@ class GoogleBatchExecutor(RemoteExecutor):
                 precommand,
                 self.get_python_executable(),
                 "-m snakemake",
-                format_cli_arg("--snakefile", self.get_snakefile()),
+                format_cli_arg("--snakefile", self.get_snakefile(job)),
                 self.get_job_args(job),
                 general_args,
                 self.additional_general_args(),
