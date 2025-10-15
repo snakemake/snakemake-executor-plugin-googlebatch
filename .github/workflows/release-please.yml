@@ -22,30 +22,22 @@ jobs:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install poetry
-        run: pip install poetry
+      - name: Install uv based on the version defined in pyproject.toml
+        uses: astral-sh/setup-uv@v6
 
-      - name: Determine dependencies
-        run: poetry lock
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-          cache: poetry
-
-      - name: Install Dependencies using Poetry
-        run: |
-          pip install connection-pool # because it is incompatible with poetry
-          poetry install
+      - name: Install dependencies
+        run: uv sync --all-extras
 
       - name: Publish to PyPi
         env:
           PYPI_USERNAME: __token__
           PYPI_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: poetry publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD
+        run: |
+          uv build
+          uv publish --build --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"

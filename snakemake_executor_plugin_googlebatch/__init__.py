@@ -1,12 +1,13 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+import urllib3
 from snakemake_interface_executor_plugins.settings import (
     CommonSettings,
     ExecutorSettingsBase,
 )
+
 from .executor import GoogleBatchExecutor as Executor  # noqa
-import urllib3
 
 urllib3.disable_warnings()
 
@@ -44,6 +45,15 @@ class ExecutorSettings(ExecutorSettingsBase):
         default=None,
         metadata={
             "help": "A custom container for use with Google Batch COS",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    container_dependencies_installed: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "If set to True, do not install snakemake or any dependencies. Google batch runs will drop into the envtrypoint and run commands assuming that snakemake and all dependencies are available and set up on the path.",
             "env_var": False,
             "required": False,
         },
@@ -185,6 +195,23 @@ class ExecutorSettings(ExecutorSettingsBase):
         },
     )
 
+    entrypoint: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Entrypoint for the container image",
+            "env_var": False,
+            "required": False,
+        },
+    )
+    split_commands: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "if True, split job commands using shlex.split and pass as an array to the google batch container. Otherwise, pass the 'commands' as one big string. This depends on how the container entrypoint is set up.",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
     work_tasks_per_node: Optional[int] = field(
         default=1,
         metadata={
@@ -234,6 +261,15 @@ class ExecutorSettings(ExecutorSettingsBase):
         default=None,
         metadata={
             "help": "One or more snippets to add to the Google Batch task setup",
+            "env_var": False,
+            "required": False,
+        },
+    )
+
+    bucket: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Bucket to mount at mount_path.",
             "env_var": False,
             "required": False,
         },
