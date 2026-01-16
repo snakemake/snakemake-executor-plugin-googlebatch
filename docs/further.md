@@ -109,6 +109,11 @@ The Google Batch executor uses the same designation for GPUs as core Snakemake. 
 [keep compatibility of machine type](https://cloud.google.com/compute/docs/gpus) with the GPU
 that you selected in mind. For example, if you select `gpu_nvidia=1` you will need an n1-* family machine type.
 
+On a n1-* family machine type, gpu_nvidia=1 will trigger a "nvidia-tesla-t4" gpu by default.
+
+It's possible to change the gpu type directly using the a machine compatible label:
+e.g. nvidia_gpu='nvidia-tesla-v100'
+
 ### Step Options
 
 The following options are allowed for batch steps. This predominantly includes most arguments.
