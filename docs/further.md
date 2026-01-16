@@ -111,7 +111,7 @@ that you selected in mind. For example, if you select `gpu_nvidia=1` you will ne
 
 On a n1-* family machine type, gpu_nvidia=1 will trigger a "nvidia-tesla-t4" gpu by default.
 
-It's possible to change the gpu type directly using the a machine compatible label:
+It's possible to change the gpu type directly using a machine-compatible label:
 e.g. nvidia_gpu='nvidia-tesla-v100'
 
 ### Step Options
